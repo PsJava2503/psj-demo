@@ -34,3 +34,7 @@ spring:
           uri: lb://psj-commerce-notification-service
           predicates:
             - Path=/api/notifications/**
+        - id: psj-commerce-address-service
+          uri: lb://psj-commerce-address-service
+          predicates:
+            - Path=/api/addresses/**

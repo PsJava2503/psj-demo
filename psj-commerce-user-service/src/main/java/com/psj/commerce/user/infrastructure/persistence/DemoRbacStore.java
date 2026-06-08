@@ -26,13 +26,15 @@ public class DemoRbacStore {
 					CommercePermissions.PRODUCT_CREATE,
 					CommercePermissions.PRODUCT_UPDATE,
 					CommercePermissions.USER_VIEW,
-					CommercePermissions.NOTIFICATION_SEND
+					CommercePermissions.NOTIFICATION_SEND,
+					CommercePermissions.ADDRESS_VIEW
 			),
 			CommerceRoles.CUSTOMER, List.of(
 					CommercePermissions.ORDER_CREATE,
 					CommercePermissions.ORDER_VIEW,
 					CommercePermissions.PAYMENT_PAY,
-					CommercePermissions.PRODUCT_VIEW
+					CommercePermissions.PRODUCT_VIEW,
+					CommercePermissions.ADDRESS_VIEW
 			),
 			CommerceRoles.MERCHANT, List.of(
 					CommercePermissions.ORDER_VIEW,
@@ -40,7 +42,8 @@ public class DemoRbacStore {
 					CommercePermissions.INVENTORY_UPDATE,
 					CommercePermissions.PRODUCT_VIEW,
 					CommercePermissions.PRODUCT_CREATE,
-					CommercePermissions.PRODUCT_UPDATE
+					CommercePermissions.PRODUCT_UPDATE,
+					CommercePermissions.ADDRESS_VIEW
 			)
 	);
 

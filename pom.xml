@@ -24,6 +24,7 @@
 		<module>psj-commerce-payment-service</module>
 		<module>psj-commerce-inventory-service</module>
 		<module>psj-commerce-notification-service</module>
+		<module>psj-commerce-address-service</module>
 	</modules>
 
 	<properties>
