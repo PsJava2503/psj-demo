@@ -1,0 +1,21 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: psj-commerce-inventory-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+
+dubbo:
+  application:
+    name: ${spring.application.name}
+  protocol:
+    name: dubbo
+    port: 20880
+  registry:
+    address: nacos://localhost:8848
+  scan:
+    base-packages: com.psj.commerce.inventory

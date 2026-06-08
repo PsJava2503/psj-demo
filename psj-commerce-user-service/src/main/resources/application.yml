@@ -1,0 +1,21 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: psj-commerce-user-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+
+dubbo:
+  application:
+    name: ${spring.application.name}
+  protocol:
+    name: dubbo
+    port: 20883
+  registry:
+    address: nacos://localhost:8848
+  scan:
+    base-packages: com.psj.commerce.user

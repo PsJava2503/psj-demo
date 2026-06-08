@@ -1,0 +1,21 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: psj-commerce-notification-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+
+dubbo:
+  application:
+    name: ${spring.application.name}
+  protocol:
+    name: dubbo
+    port: 20884
+  registry:
+    address: nacos://localhost:8848
+  scan:
+    base-packages: com.psj.commerce.notification

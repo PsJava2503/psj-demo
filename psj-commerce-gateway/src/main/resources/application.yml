@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: psj-commerce-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+    gateway:
+      routes:
+        - id: psj-commerce-order-service
+          uri: lb://psj-commerce-order-service
+          predicates:
+            - Path=/api/orders/**
+        - id: psj-commerce-user-service
+          uri: lb://psj-commerce-user-service
+          predicates:
+            - Path=/api/users/**
+        - id: psj-commerce-product-service
+          uri: lb://psj-commerce-product-service
+          predicates:
+            - Path=/api/products/**
+        - id: psj-commerce-payment-service
+          uri: lb://psj-commerce-payment-service
+          predicates:
+            - Path=/api/payments/**
+        - id: psj-commerce-inventory-service
+          uri: lb://psj-commerce-inventory-service
+          predicates:
+            - Path=/api/inventory/**
+        - id: psj-commerce-notification-service
+          uri: lb://psj-commerce-notification-service
+          predicates:
+            - Path=/api/notifications/**
