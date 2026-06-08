@@ -19,3 +19,10 @@ dubbo:
     address: nacos://localhost:8848
   scan:
     base-packages: com.psj.commerce.user
+
+sa-token:
+  token-name: satoken
+  timeout: 86400
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false

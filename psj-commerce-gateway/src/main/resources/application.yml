@@ -17,7 +17,7 @@ spring:
         - id: psj-commerce-user-service
           uri: lb://psj-commerce-user-service
           predicates:
-            - Path=/api/users/**
+            - Path=/api/auth/**,/api/users/**
         - id: psj-commerce-product-service
           uri: lb://psj-commerce-product-service
           predicates:
