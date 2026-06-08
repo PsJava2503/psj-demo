@@ -1,6 +1,7 @@
 package com.psj.commerce.gateway.security;
 
-import com.psj.commerce.security.AuthSession;
+import cn.dev33.satoken.session.SaSession;
+import cn.dev33.satoken.stp.StpUtil;
 import com.psj.commerce.security.CommercePermissions;
 import com.psj.commerce.security.SecurityHeaders;
 import java.util.List;
@@ -12,7 +13,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -31,12 +31,6 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
 			"/api/addresses", CommercePermissions.ADDRESS_VIEW
 	);
 
-	private final WebClient webClient;
-
-	public GatewayAuthFilter(WebClient.Builder webClientBuilder) {
-		this.webClient = webClientBuilder.baseUrl("http://psj-commerce-user-service").build();
-	}
-
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 		String path = exchange.getRequest().getPath().value();
@@ -50,35 +44,41 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
 			return exchange.getResponse().setComplete();
 		}
 
-		return webClient.get()
-				.uri("/api/auth/session")
-				.header(TOKEN_HEADER, token)
-				.retrieve()
-				.bodyToMono(AuthSession.class)
-				.flatMap(session -> authorizeAndForward(exchange, chain, path, session))
-				.onErrorResume(error -> {
-					exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-					return exchange.getResponse().setComplete();
-				});
+		try {
+			Object loginId = StpUtil.getLoginIdByToken(token);
+			SaSession tokenSession = StpUtil.getTokenSessionByToken(token);
+			Long userId = toLong(tokenSession.get("userId"), loginId);
+			String username = toStringValue(tokenSession.get("username"));
+			List<String> roles = asStringList(tokenSession.get("roles"));
+			List<String> permissions = asStringList(tokenSession.get("permissions"));
+			return authorizeAndForward(exchange, chain, path, userId, username, roles, permissions);
+		}
+		catch (Exception error) {
+			exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+			return exchange.getResponse().setComplete();
+		}
 	}
 
 	private Mono<Void> authorizeAndForward(
 			ServerWebExchange exchange,
 			GatewayFilterChain chain,
 			String path,
-			AuthSession session
+			Long userId,
+			String username,
+			List<String> roles,
+			List<String> permissions
 	) {
 		String requiredPermission = requiredPermission(path);
-		if (requiredPermission != null && !session.permissions().contains(requiredPermission)) {
+		if (requiredPermission != null && !permissions.contains(requiredPermission)) {
 			exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
 			return exchange.getResponse().setComplete();
 		}
 
 		ServerHttpRequest request = exchange.getRequest().mutate()
-				.header(SecurityHeaders.USER_ID, session.userId().toString())
-				.header(SecurityHeaders.USERNAME, session.username())
-				.header(SecurityHeaders.ROLES, String.join(",", session.roles()))
-				.header(SecurityHeaders.PERMISSIONS, String.join(",", session.permissions()))
+				.header(SecurityHeaders.USER_ID, String.valueOf(userId))
+				.header(SecurityHeaders.USERNAME, username)
+				.header(SecurityHeaders.ROLES, String.join(",", roles))
+				.header(SecurityHeaders.PERMISSIONS, String.join(",", permissions))
 				.header(HttpHeaders.AUTHORIZATION, "")
 				.build();
 		return chain.filter(exchange.mutate().request(request).build());
@@ -90,6 +90,22 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
 				.map(Map.Entry::getValue)
 				.findFirst()
 				.orElse(null);
+	}
+
+	private List<String> asStringList(Object value) {
+		if (value instanceof List<?> list) {
+			return list.stream().map(String::valueOf).toList();
+		}
+		return List.of();
+	}
+
+	private String toStringValue(Object value) {
+		return value == null ? "" : String.valueOf(value);
+	}
+
+	private Long toLong(Object value, Object fallback) {
+		Object target = value == null ? fallback : value;
+		return Long.valueOf(String.valueOf(target));
 	}
 
 	@Override

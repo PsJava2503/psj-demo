@@ -97,6 +97,106 @@ This repository currently follows scaffold-first implementation:
 - Prioritize stable boundaries and dependency direction.
 - Add real business complexity after ports and layer contracts are stable.
 
+### 8. Gateway Auth with Redis Session
+
+Current gateway authentication no longer calls `user-service` at runtime.
+
+- Login path:
+  - `POST /api/auth/login` is handled by `user-service`.
+  - After successful login, token session fields are stored by Sa-Token:
+    - `userId`
+    - `username`
+    - `roles`
+    - `permissions`
+- Request path:
+  - Client sends `satoken`.
+  - `GatewayAuthFilter` validates token and reads token-session directly from Redis.
+  - Gateway checks path-based permission mapping and returns:
+    - `401` for invalid/missing token
+    - `403` for permission denied
+  - If passed, gateway forwards user context headers to downstream services.
+
+Required dependencies and config (already applied):
+
+- Dependencies:
+  - `sa-token-redis-jackson`
+  - `spring-boot-starter-data-redis`
+- Config:
+  - `spring.data.redis.host`
+  - `spring.data.redis.port`
+
+### 9. Dubbo Internal Signature Skeleton
+
+Internal Dubbo calls are now protected by a signature skeleton (without nonce replay cache).
+
+- Consumer filter: `internalSignConsumer`
+  - Adds invocation attachments:
+    - `x-internal-service`
+    - `x-internal-ts`
+    - `x-internal-nonce`
+    - `x-internal-sign`
+- Provider filter: `internalVerifyProvider`
+  - Verifies attachment completeness.
+  - Verifies timestamp window (`5 minutes` default).
+  - Verifies HMAC-SHA256 signature.
+- SPI registration:
+  - `META-INF/dubbo/org.apache.dubbo.rpc.Filter`
+
+Secret resolution order:
+
+1. JVM property: `-Dinternal.auth.secret=...`
+2. Environment variable: `INTERNAL_AUTH_SECRET`
+3. Fallback placeholder value (for demo only; replace in real env)
+
+### 10. Local Integration Runbook
+
+#### Prerequisites
+
+- JDK 17
+- Maven Wrapper (`./mvnw`)
+- Nacos running at `localhost:8848`
+- Redis running at `localhost:6379`
+
+#### Recommended startup order
+
+1. `psj-commerce-user-service`
+2. `psj-commerce-gateway`
+3. RPC provider services:
+   - `psj-commerce-product-service`
+   - `psj-commerce-inventory-service`
+   - `psj-commerce-payment-service`
+   - `psj-commerce-notification-service`
+   - `psj-commerce-address-service`
+4. `psj-commerce-order-service`
+
+#### Build and run
+
+- Full build:
+  - `./mvnw test`
+- Run one module (example):
+  - `./mvnw -pl psj-commerce-user-service spring-boot:run`
+
+#### Minimal verification flow
+
+1. Login to get token:
+   - `POST http://localhost:8080/api/auth/login`
+   - Body:
+     - `{"username":"customer","password":"123456"}`
+2. Call protected API with header `satoken: <token>`:
+   - `GET http://localhost:8080/api/products/1/price`
+   - `GET http://localhost:8080/api/addresses/2/default`
+3. Verify permission behavior:
+   - Missing token -> `401`
+   - Invalid/expired token -> `401`
+   - Insufficient permission -> `403`
+
+#### Internal signature notes
+
+- Set shared secret consistently for all Dubbo services:
+  - JVM property: `-Dinternal.auth.secret=<your-secret>`
+  - or env: `INTERNAL_AUTH_SECRET=<your-secret>`
+- If secrets differ between caller/provider, Dubbo call will fail with signature error.
+
 ---
 
 ## psj-commerce DDD 骨架指南（中文）
@@ -197,3 +297,103 @@ com.psj.commerce.<bounded-context>
 - 业务细节保持最小且可替换。
 - 优先保证边界稳定和依赖方向正确。
 - 在端口与分层契约稳定后，再逐步增加真实业务复杂度。
+
+### 8. 基于 Redis 会话的网关鉴权
+
+当前网关鉴权在运行时不再回调 `user-service`。
+
+- 登录路径：
+  - `POST /api/auth/login` 由 `user-service` 处理。
+  - 登录成功后，Sa-Token 会把以下 token-session 字段写入 Redis：
+    - `userId`
+    - `username`
+    - `roles`
+    - `permissions`
+- 请求路径：
+  - 客户端携带 `satoken` 访问业务接口。
+  - `GatewayAuthFilter` 直接从 Redis 会话读取并校验。
+  - 网关按路径映射做权限检查，返回：
+    - token 缺失或无效 -> `401`
+    - 权限不足 -> `403`
+  - 校验通过后，透传用户上下文 header 给下游服务。
+
+已接入的依赖和配置：
+
+- 依赖：
+  - `sa-token-redis-jackson`
+  - `spring-boot-starter-data-redis`
+- 配置：
+  - `spring.data.redis.host`
+  - `spring.data.redis.port`
+
+### 9. Dubbo 服务间签名骨架
+
+当前 Dubbo 内部调用已接入签名骨架（不包含 Redis nonce 防重放）。
+
+- Consumer 过滤器：`internalSignConsumer`
+  - 自动附加调用附件：
+    - `x-internal-service`
+    - `x-internal-ts`
+    - `x-internal-nonce`
+    - `x-internal-sign`
+- Provider 过滤器：`internalVerifyProvider`
+  - 校验附件完整性
+  - 校验时间窗（默认 5 分钟）
+  - 校验 HMAC-SHA256 签名
+- SPI 注册文件：
+  - `META-INF/dubbo/org.apache.dubbo.rpc.Filter`
+
+签名密钥读取顺序：
+
+1. JVM 启动参数：`-Dinternal.auth.secret=...`
+2. 环境变量：`INTERNAL_AUTH_SECRET`
+3. 默认占位值（仅用于 demo，生产必须替换）
+
+### 10. 本地联调步骤
+
+#### 前置条件
+
+- JDK 17
+- Maven Wrapper（`./mvnw`）
+- Nacos 已在 `localhost:8848` 运行
+- Redis 已在 `localhost:6379` 运行
+
+#### 推荐启动顺序
+
+1. `psj-commerce-user-service`
+2. `psj-commerce-gateway`
+3. 各 Dubbo Provider 服务：
+   - `psj-commerce-product-service`
+   - `psj-commerce-inventory-service`
+   - `psj-commerce-payment-service`
+   - `psj-commerce-notification-service`
+   - `psj-commerce-address-service`
+4. `psj-commerce-order-service`
+
+#### 构建与运行
+
+- 全量构建：
+  - `./mvnw test`
+- 单模块启动（示例）：
+  - `./mvnw -pl psj-commerce-user-service spring-boot:run`
+
+#### 最小验证流程
+
+1. 登录获取 token：
+   - `POST http://localhost:8080/api/auth/login`
+   - 请求体：
+     - `{"username":"customer","password":"123456"}`
+2. 携带 `satoken: <token>` 调用受保护接口：
+   - `GET http://localhost:8080/api/products/1/price`
+   - `GET http://localhost:8080/api/addresses/2/default`
+3. 验证权限行为：
+   - 不带 token -> `401`
+   - token 无效/过期 -> `401`
+   - 权限不足 -> `403`
+
+#### 服务间签名注意事项
+
+- 所有 Dubbo 服务必须使用同一套共享密钥：
+  - JVM 参数：`-Dinternal.auth.secret=<your-secret>`
+  - 或环境变量：`INTERNAL_AUTH_SECRET=<your-secret>`
+- 调用方和被调方密钥不一致时，会出现签名校验失败。

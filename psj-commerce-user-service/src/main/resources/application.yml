@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: psj-commerce-user-service
+  data:
+    redis:
+      host: localhost
+      port: 6379
   cloud:
     nacos:
       discovery:
@@ -19,6 +23,10 @@ dubbo:
     address: nacos://localhost:8848
   scan:
     base-packages: com.psj.commerce.user
+  consumer:
+    filter: internalSignConsumer
+  provider:
+    filter: internalVerifyProvider
 
 sa-token:
   token-name: satoken

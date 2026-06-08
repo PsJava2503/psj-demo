@@ -17,3 +17,7 @@ dubbo:
   protocol:
     name: dubbo
     port: -1
+  consumer:
+    filter: internalSignConsumer
+  provider:
+    filter: internalVerifyProvider

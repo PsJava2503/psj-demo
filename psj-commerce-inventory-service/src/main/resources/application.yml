@@ -19,3 +19,7 @@ dubbo:
     address: nacos://localhost:8848
   scan:
     base-packages: com.psj.commerce.inventory
+  consumer:
+    filter: internalSignConsumer
+  provider:
+    filter: internalVerifyProvider
