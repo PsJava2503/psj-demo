@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+set -eu
+
+echo "Running Spotless formatter..."
+./mvnw -q spotless:apply
+
+if ! git diff --quiet; then
+  echo "Spotless formatted files. Review the changes, git add them, then commit again."
+  exit 1
+fi
+
+if ! git diff --cached --quiet; then
+  echo "Spotless check passed."
+fi
