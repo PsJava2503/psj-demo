@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface UserClient extends UserQueryPort {
 
 	@Override
-	@GetMapping("/api/users/{userId}")
+	@GetMapping("/internal/users/{userId}")
 	String getUserName(@PathVariable("userId") Long userId);
 
 }

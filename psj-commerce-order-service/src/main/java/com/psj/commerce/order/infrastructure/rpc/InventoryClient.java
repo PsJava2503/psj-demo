@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface InventoryClient extends InventoryCommandPort {
 
 	@Override
-	@PostMapping("/api/inventory/deduct")
+	@PostMapping("/internal/inventory/deduct")
 	boolean deductStock(@RequestParam("productId") Long productId, @RequestParam("quantity") Integer quantity);
 
 }

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 public interface ProductClient extends ProductQueryPort {
 
 	@Override
-	@GetMapping("/api/products/{productId}/price")
+	@GetMapping("/internal/products/{productId}/price")
 	BigDecimal getPrice(@PathVariable("productId") Long productId);
 
 }

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface PaymentClient extends PaymentCommandPort {
 
 	@Override
-	@PostMapping("/api/payments/pay")
+	@PostMapping("/internal/payments/pay")
 	String pay(@RequestParam("orderId") Long orderId, @RequestParam("amount") BigDecimal amount);
 
 }

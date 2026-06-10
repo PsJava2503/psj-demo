@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface NotificationClient extends NotificationCommandPort {
 
 	@Override
-	@PostMapping("/api/notifications/order-paid")
+	@PostMapping("/internal/notifications/order-paid")
 	void notifyOrderPaid(@RequestParam("orderId") Long orderId);
 
 }
