@@ -10,9 +10,11 @@ public class UserQueryOptions {
 	private final Optional<String> secondName;
 	private final Optional<String> phone;
 	private final Optional<String> email;
-	private final Optional<Long> defaultAddressId;
+	private final Optional<Long> defaultAddressSlotId;
+	private final Optional<Boolean> enabled;
 	private final Optional<Boolean> deleted;
 	private final Optional<ZonedDateTime> createTime;
+	private final Optional<ZonedDateTime> updateTime;
 
 	public UserQueryOptions(
 			Optional<Long> id,
@@ -20,22 +22,28 @@ public class UserQueryOptions {
 			Optional<String> secondName,
 			Optional<String> phone,
 			Optional<String> email,
-			Optional<Long> defaultAddressId,
+			Optional<Long> defaultAddressSlotId,
+			Optional<Boolean> enabled,
 			Optional<Boolean> deleted,
-			Optional<ZonedDateTime> createTime
+			Optional<ZonedDateTime> createTime,
+			Optional<ZonedDateTime> updateTime
 	) {
 		this.id = id == null ? Optional.empty() : id;
 		this.firstName = firstName == null ? Optional.empty() : firstName;
 		this.secondName = secondName == null ? Optional.empty() : secondName;
 		this.phone = phone == null ? Optional.empty() : phone;
 		this.email = email == null ? Optional.empty() : email;
-		this.defaultAddressId = defaultAddressId == null ? Optional.empty() : defaultAddressId;
+		this.defaultAddressSlotId = defaultAddressSlotId == null ? Optional.empty() : defaultAddressSlotId;
+		this.enabled = enabled == null ? Optional.empty() : enabled;
 		this.deleted = deleted == null ? Optional.empty() : deleted;
 		this.createTime = createTime == null ? Optional.empty() : createTime;
+		this.updateTime = updateTime == null ? Optional.empty() : updateTime;
 	}
 
 	public static UserQueryOptions none() {
 		return new UserQueryOptions(
+				Optional.empty(),
+				Optional.empty(),
 				Optional.empty(),
 				Optional.empty(),
 				Optional.empty(),
@@ -67,8 +75,12 @@ public class UserQueryOptions {
 		return email;
 	}
 
-	public Optional<Long> getDefaultAddressId() {
-		return defaultAddressId;
+	public Optional<Long> getDefaultAddressSlotId() {
+		return defaultAddressSlotId;
+	}
+
+	public Optional<Boolean> getEnabled() {
+		return enabled;
 	}
 
 	public Optional<Boolean> getDeleted() {
@@ -77,6 +89,10 @@ public class UserQueryOptions {
 
 	public Optional<ZonedDateTime> getCreateTime() {
 		return createTime;
+	}
+
+	public Optional<ZonedDateTime> getUpdateTime() {
+		return updateTime;
 	}
 
 	public boolean hasId() {
@@ -99,8 +115,12 @@ public class UserQueryOptions {
 		return email.isPresent();
 	}
 
-	public boolean hasDefaultAddressId() {
-		return defaultAddressId.isPresent();
+	public boolean hasDefaultAddressSlotId() {
+		return defaultAddressSlotId.isPresent();
+	}
+
+	public boolean hasEnabled() {
+		return enabled.isPresent();
 	}
 
 	public boolean hasDeleted() {
@@ -109,6 +129,10 @@ public class UserQueryOptions {
 
 	public boolean hasCreateTime() {
 		return createTime.isPresent();
+	}
+
+	public boolean hasUpdateTime() {
+		return updateTime.isPresent();
 	}
 
 	public Long getIdValue() {
@@ -131,8 +155,12 @@ public class UserQueryOptions {
 		return email.orElse(null);
 	}
 
-	public Long getDefaultAddressIdValue() {
-		return defaultAddressId.orElse(null);
+	public Long getDefaultAddressSlotIdValue() {
+		return defaultAddressSlotId.orElse(null);
+	}
+
+	public Boolean getEnabledValue() {
+		return enabled.orElse(null);
 	}
 
 	public Boolean getDeletedValue() {
@@ -141,5 +169,9 @@ public class UserQueryOptions {
 
 	public ZonedDateTime getCreateTimeValue() {
 		return createTime.orElse(null);
+	}
+
+	public ZonedDateTime getUpdateTimeValue() {
+		return updateTime.orElse(null);
 	}
 }

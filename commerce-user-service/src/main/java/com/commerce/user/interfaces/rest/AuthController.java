@@ -20,6 +20,12 @@ public class AuthController {
 		this.authUseCase = authUseCase;
 	}
 
+	@PostMapping("/register")
+	@ResponseStatus(HttpStatus.CREATED)
+	public LoginResponse register(@RequestBody RegisterRequest request) {
+		return authUseCase.register(request);
+	}
+
 	@PostMapping("/login")
 	public LoginResponse login(@RequestBody LoginRequest request) {
 		return authUseCase.login(request);
@@ -28,6 +34,18 @@ public class AuthController {
 	@GetMapping("/session")
 	public AuthSession session() {
 		return authUseCase.session();
+	}
+
+	@PostMapping("/password")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void changePassword(@RequestBody ChangePasswordRequest request) {
+		authUseCase.changePassword(request);
+	}
+
+	@PostMapping("/login/disable")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void disableLogin(@RequestBody DisableLoginRequest request) {
+		authUseCase.disableLogin(request);
 	}
 
 	@PostMapping("/logout")

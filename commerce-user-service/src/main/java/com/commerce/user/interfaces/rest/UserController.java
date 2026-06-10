@@ -31,9 +31,11 @@ public class UserController {
 			@RequestParam Optional<String> secondName,
 			@RequestParam Optional<String> phone,
 			@RequestParam Optional<String> email,
-			@RequestParam Optional<Long> defaultAddressId,
+			@RequestParam Optional<Long> defaultAddressSlotId,
+			@RequestParam Optional<Boolean> enabled,
 			@RequestParam Optional<Boolean> deleted,
-			@RequestParam Optional<ZonedDateTime> createTime
+			@RequestParam Optional<ZonedDateTime> createTime,
+			@RequestParam Optional<ZonedDateTime> updateTime
 	) {
 		UserQueryOptions options = new UserQueryOptions(
 				id,
@@ -41,9 +43,11 @@ public class UserController {
 				secondName,
 				phone,
 				email,
-				defaultAddressId,
+				defaultAddressSlotId,
+				enabled,
 				deleted,
-				createTime
+				createTime,
+				updateTime
 		);
 		return userUseCase.query(options).stream()
 				.map(UserRepresentationMapper::toResponse)
@@ -59,7 +63,9 @@ public class UserController {
 				Optional.empty(),
 				Optional.empty(),
 				Optional.empty(),
+				Optional.of(true),
 				Optional.of(false),
+				Optional.empty(),
 				Optional.empty()
 		);
 		return userUseCase.query(options).stream()

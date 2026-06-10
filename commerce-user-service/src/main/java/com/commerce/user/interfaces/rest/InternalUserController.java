@@ -30,7 +30,9 @@ public class InternalUserController {
 				Optional.empty(),
 				Optional.empty(),
 				Optional.empty(),
+				Optional.of(true),
 				Optional.of(false),
+				Optional.empty(),
 				Optional.empty()
 		);
 		return userUseCase.query(options).stream()

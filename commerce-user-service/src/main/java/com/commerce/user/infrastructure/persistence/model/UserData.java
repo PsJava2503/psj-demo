@@ -8,8 +8,10 @@ public record UserData(
 		String secondName,
 		String phone,
 		String email,
-		Long defaultAddressId,
+		Long defaultAddressSlotId,
 		Boolean deleted,
-		ZonedDateTime createTime
+		Boolean enabled,
+		ZonedDateTime createTime,
+		ZonedDateTime updateTime
 ) {
 }

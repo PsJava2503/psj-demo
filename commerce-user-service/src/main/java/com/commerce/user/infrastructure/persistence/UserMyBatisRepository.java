@@ -1,9 +1,13 @@
 package com.commerce.user.infrastructure.persistence;
 
 import com.commerce.user.domain.model.User;
+import com.commerce.user.domain.model.UserAddressSlot;
 import com.commerce.user.domain.model.UserQueryOptions;
+import com.commerce.user.domain.port.RbacRepository;
 import com.commerce.user.domain.port.UserRepository;
+import com.commerce.user.infrastructure.persistence.mapper.UserAddressSlotDynamicMapper;
 import com.commerce.user.infrastructure.persistence.mapper.UserDynamicMapper;
+import com.commerce.user.infrastructure.persistence.model.UserAddressSlotData;
 import com.commerce.user.infrastructure.persistence.model.UserData;
 import java.util.List;
 import org.springframework.stereotype.Repository;
@@ -12,9 +16,17 @@ import org.springframework.stereotype.Repository;
 public class UserMyBatisRepository implements UserRepository {
 
 	private final UserDynamicMapper userDynamicMapper;
+	private final RbacRepository rbacRepository;
+	private final UserAddressSlotDynamicMapper userAddressSlotDynamicMapper;
 
-	public UserMyBatisRepository(UserDynamicMapper userDynamicMapper) {
+	public UserMyBatisRepository(
+			UserDynamicMapper userDynamicMapper,
+			RbacRepository rbacRepository,
+			UserAddressSlotDynamicMapper userAddressSlotDynamicMapper
+	) {
 		this.userDynamicMapper = userDynamicMapper;
+		this.rbacRepository = rbacRepository;
+		this.userAddressSlotDynamicMapper = userAddressSlotDynamicMapper;
 	}
 
 	@Override
@@ -47,9 +59,13 @@ public class UserMyBatisRepository implements UserRepository {
 				data.secondName(),
 				data.phone(),
 				data.email(),
-				data.defaultAddressId(),
+				data.defaultAddressSlotId(),
+				rolesOf(data.id()),
+				addressSlotsOf(data.id()),
+				data.enabled(),
 				data.deleted(),
-				data.createTime()
+				data.createTime(),
+				data.updateTime()
 		);
 	}
 
@@ -60,9 +76,32 @@ public class UserMyBatisRepository implements UserRepository {
 				user.secondName(),
 				user.phone(),
 				user.email(),
-				user.defaultAddressId(),
+				user.defaultAddressSlotId(),
+				user.enabled(),
 				user.deleted(),
-				user.createTime()
+				user.createTime(),
+				user.updateTime()
+		);
+	}
+
+	private List<String> rolesOf(Long userId) {
+		return rbacRepository.rolesOf(userId);
+	}
+
+	private List<UserAddressSlot> addressSlotsOf(Long userId) {
+		return userAddressSlotDynamicMapper.selectByUserId(userId).stream()
+				.map(this::toDomain)
+				.toList();
+	}
+
+	private UserAddressSlot toDomain(UserAddressSlotData data) {
+		return new UserAddressSlot(
+				data.id(),
+				data.userId(),
+				data.addressId(),
+				data.slotName(),
+				data.deleted(),
+				data.createTime()
 		);
 	}
 

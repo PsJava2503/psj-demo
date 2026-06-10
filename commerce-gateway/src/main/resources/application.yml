@@ -21,7 +21,7 @@ spring:
         - id: commerce-user-service
           uri: lb://commerce-user-service
           predicates:
-            - Path=/api/auth/**,/api/users/**
+            - Path=/api/auth/**,/api/users/**,/api/rbac/**
         - id: commerce-product-service
           uri: lb://commerce-product-service
           predicates:
