@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: commerce-gateway
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+    gateway:
+      routes:
+        - id: commerce-order-service
+          uri: lb://commerce-order-service
+          predicates:
+            - Path=/api/orders/**
+        - id: commerce-user-service
+          uri: lb://commerce-user-service
+          predicates:
+            - Path=/api/auth/**,/api/users/**
+        - id: commerce-product-service
+          uri: lb://commerce-product-service
+          predicates:
+            - Path=/api/products/**
+        - id: commerce-payment-service
+          uri: lb://commerce-payment-service
+          predicates:
+            - Path=/api/payments/**
+        - id: commerce-inventory-service
+          uri: lb://commerce-inventory-service
+          predicates:
+            - Path=/api/inventory/**
+        - id: commerce-notification-service
+          uri: lb://commerce-notification-service
+          predicates:
+            - Path=/api/notifications/**
+        - id: commerce-address-service
+          uri: lb://commerce-address-service
+          predicates:
+            - Path=/api/addresses/**

@@ -1,11 +1,11 @@
-## psj-commerce DDD Skeleton Guide (EN)
+## commerce DDD Skeleton Guide (EN)
 
 ### 1. Service Internal Layers
 
 Each business service uses the same internal structure:
 
 ```text
-com.psj.commerce.<bounded-context>
+com.commerce.<bounded-context>
 ├── interfaces
 │   └── rest
 ├── application
@@ -146,15 +146,15 @@ Inter-service calls use Spring Cloud OpenFeign with Nacos service discovery.
 
 #### Recommended startup order
 
-1. `psj-commerce-user-service`
-2. `psj-commerce-gateway`
+1. `commerce-user-service`
+2. `commerce-gateway`
 3. Dependent business services:
-   - `psj-commerce-product-service`
-   - `psj-commerce-inventory-service`
-   - `psj-commerce-payment-service`
-   - `psj-commerce-notification-service`
-   - `psj-commerce-address-service`
-4. `psj-commerce-order-service`
+   - `commerce-product-service`
+   - `commerce-inventory-service`
+   - `commerce-payment-service`
+   - `commerce-notification-service`
+   - `commerce-address-service`
+4. `commerce-order-service`
 
 #### Build and run
 
@@ -168,7 +168,7 @@ Inter-service calls use Spring Cloud OpenFeign with Nacos service discovery.
   - `bash scripts/deploy/up-all.sh test`
   - `bash scripts/deploy/up-all.sh prod`
 - Run one module directly (non-Docker, optional):
-  - `./mvnw -pl psj-commerce-user-service spring-boot:run`
+  - `./mvnw -pl commerce-user-service spring-boot:run`
 
 #### Minimal verification flow
 
@@ -192,14 +192,14 @@ Inter-service calls use Spring Cloud OpenFeign with Nacos service discovery.
 
 ---
 
-## psj-commerce DDD 骨架指南（中文）
+## commerce DDD 骨架指南（中文）
 
 ### 1. 服务内部分层
 
 每个业务服务统一采用以下结构：
 
 ```text
-com.psj.commerce.<bounded-context>
+com.commerce.<bounded-context>
 ├── interfaces
 │   └── rest
 ├── application
@@ -340,15 +340,15 @@ com.psj.commerce.<bounded-context>
 
 #### 推荐启动顺序
 
-1. `psj-commerce-user-service`
-2. `psj-commerce-gateway`
+1. `commerce-user-service`
+2. `commerce-gateway`
 3. 下游依赖服务：
-   - `psj-commerce-product-service`
-   - `psj-commerce-inventory-service`
-   - `psj-commerce-payment-service`
-   - `psj-commerce-notification-service`
-   - `psj-commerce-address-service`
-4. `psj-commerce-order-service`
+   - `commerce-product-service`
+   - `commerce-inventory-service`
+   - `commerce-payment-service`
+   - `commerce-notification-service`
+   - `commerce-address-service`
+4. `commerce-order-service`
 
 #### 构建与运行
 
@@ -362,7 +362,7 @@ com.psj.commerce.<bounded-context>
   - `bash scripts/deploy/up-all.sh test`
   - `bash scripts/deploy/up-all.sh prod`
 - 单模块本地直启（非 Docker，可选）：
-  - `./mvnw -pl psj-commerce-user-service spring-boot:run`
+  - `./mvnw -pl commerce-user-service spring-boot:run`
 
 #### 最小验证流程
 

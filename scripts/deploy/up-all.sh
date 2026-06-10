@@ -35,7 +35,7 @@ case "$ENV_NAME" in
     ;;
 esac
 
-NETWORK_NAME="psj-commerce-${ENV_NAME}-net"
+NETWORK_NAME="commerce-${ENV_NAME}-net"
 DB_USER="postgres"
 DB_PASSWORD="postgres"
 NACOS_ADDR="nacos:8848"
@@ -95,7 +95,7 @@ resolve_app_jar() {
 }
 
 run_infra_compose() {
-  COMPOSE_PROJECT_NAME="psj-${ENV_NAME}-infra" \
+  COMPOSE_PROJECT_NAME="commerce-${ENV_NAME}-infra" \
   ENV_NAME="$ENV_NAME" \
   NETWORK_NAME="$NETWORK_NAME" \
   NACOS_PORT="$NACOS_PORT" \
@@ -143,7 +143,7 @@ compose_up() {
   app_jar="$(resolve_app_jar "$module")"
   require_file "${ROOT_DIR}/${module}/deploy/docker-compose.yml" "Expected compose file in module deploy directory."
 
-  COMPOSE_PROJECT_NAME="psj-${ENV_NAME}-${module##*/}" \
+  COMPOSE_PROJECT_NAME="commerce-${ENV_NAME}-${module##*/}" \
   ENV_NAME="$ENV_NAME" \
   NETWORK_NAME="$NETWORK_NAME" \
   NACOS_ADDR="$NACOS_ADDR" \
@@ -171,13 +171,13 @@ echo ">>> Starting infra stack (${ENV_NAME})"
 run_infra_compose up -d
 
 echo ">>> Starting business services (${ENV_NAME})"
-compose_up "psj-commerce-user-service" $((8083 + APP_OFFSET)) "psj_commerce_user" $((DB_BASE_PORT + 1))
-compose_up "psj-commerce-product-service" $((8084 + APP_OFFSET)) "psj_commerce_product" $((DB_BASE_PORT + 2))
-compose_up "psj-commerce-inventory-service" $((8082 + APP_OFFSET)) "psj_commerce_inventory" $((DB_BASE_PORT + 3))
-compose_up "psj-commerce-payment-service" $((8085 + APP_OFFSET)) "psj_commerce_payment" $((DB_BASE_PORT + 4))
-compose_up "psj-commerce-notification-service" $((8086 + APP_OFFSET)) "psj_commerce_notification" $((DB_BASE_PORT + 5))
-compose_up "psj-commerce-address-service" $((8087 + APP_OFFSET)) "psj_commerce_address" $((DB_BASE_PORT + 6))
-compose_up "psj-commerce-order-service" $((8081 + APP_OFFSET)) "psj_commerce_order" $((DB_BASE_PORT + 7))
-compose_up "psj-commerce-gateway" $((8080 + APP_OFFSET))
+compose_up "commerce-user-service" $((8083 + APP_OFFSET)) "commerce_user" $((DB_BASE_PORT + 1))
+compose_up "commerce-product-service" $((8084 + APP_OFFSET)) "commerce_product" $((DB_BASE_PORT + 2))
+compose_up "commerce-inventory-service" $((8082 + APP_OFFSET)) "commerce_inventory" $((DB_BASE_PORT + 3))
+compose_up "commerce-payment-service" $((8085 + APP_OFFSET)) "commerce_payment" $((DB_BASE_PORT + 4))
+compose_up "commerce-notification-service" $((8086 + APP_OFFSET)) "commerce_notification" $((DB_BASE_PORT + 5))
+compose_up "commerce-address-service" $((8087 + APP_OFFSET)) "commerce_address" $((DB_BASE_PORT + 6))
+compose_up "commerce-order-service" $((8081 + APP_OFFSET)) "commerce_order" $((DB_BASE_PORT + 7))
+compose_up "commerce-gateway" $((8080 + APP_OFFSET))
 
 echo ">>> Done. Environment: ${ENV_NAME}"

@@ -14,20 +14,20 @@ esac
 
 down_compose() {
   local module="$1"
-  COMPOSE_PROJECT_NAME="psj-${ENV_NAME}-${module##*/}" \
+  COMPOSE_PROJECT_NAME="commerce-${ENV_NAME}-${module##*/}" \
   docker compose -f "${ROOT_DIR}/${module}/deploy/docker-compose.yml" down --remove-orphans
 }
 
-down_compose "psj-commerce-gateway"
-down_compose "psj-commerce-order-service"
-down_compose "psj-commerce-address-service"
-down_compose "psj-commerce-notification-service"
-down_compose "psj-commerce-payment-service"
-down_compose "psj-commerce-inventory-service"
-down_compose "psj-commerce-product-service"
-down_compose "psj-commerce-user-service"
+down_compose "commerce-gateway"
+down_compose "commerce-order-service"
+down_compose "commerce-address-service"
+down_compose "commerce-notification-service"
+down_compose "commerce-payment-service"
+down_compose "commerce-inventory-service"
+down_compose "commerce-product-service"
+down_compose "commerce-user-service"
 
-COMPOSE_PROJECT_NAME="psj-${ENV_NAME}-infra" \
+COMPOSE_PROJECT_NAME="commerce-${ENV_NAME}-infra" \
 docker compose -f "${ROOT_DIR}/deploy/infra/docker-compose.yml" down --remove-orphans
 
 echo ">>> Stopped environment: ${ENV_NAME}"

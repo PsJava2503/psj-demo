@@ -8,23 +8,23 @@
 		<version>3.2.12</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.psj</groupId>
-	<artifactId>psj-commerce</artifactId>
+	<groupId>com.commerce</groupId>
+	<artifactId>commerce</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>psj-commerce</name>
+	<name>commerce</name>
 	<description>Commerce demo with order, payment, and inventory services</description>
 
 	<modules>
-		<module>psj-commerce-common-api</module>
-		<module>psj-commerce-gateway</module>
-		<module>psj-commerce-user-service</module>
-		<module>psj-commerce-product-service</module>
-		<module>psj-commerce-order-service</module>
-		<module>psj-commerce-payment-service</module>
-		<module>psj-commerce-inventory-service</module>
-		<module>psj-commerce-notification-service</module>
-		<module>psj-commerce-address-service</module>
+		<module>commerce-contracts</module>
+		<module>commerce-gateway</module>
+		<module>commerce-user-service</module>
+		<module>commerce-product-service</module>
+		<module>commerce-order-service</module>
+		<module>commerce-payment-service</module>
+		<module>commerce-inventory-service</module>
+		<module>commerce-notification-service</module>
+		<module>commerce-address-service</module>
 	</modules>
 
 	<properties>
