@@ -1,0 +1,28 @@
+services:
+  nacos:
+    image: nacos/nacos-server:v2.4.2
+    environment:
+      MODE: standalone
+    ports:
+      - "${NACOS_PORT}:8848"
+    networks:
+      - psj-commerce-net
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "${REDIS_PORT}:6379"
+    networks:
+      - psj-commerce-net
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MGMT_PORT}:15672"
+    networks:
+      - psj-commerce-net
+
+networks:
+  psj-commerce-net:
+    name: ${NETWORK_NAME}

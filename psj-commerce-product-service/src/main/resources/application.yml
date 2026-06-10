@@ -4,6 +4,14 @@ server:
 spring:
   application:
     name: psj-commerce-product-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/psj_commerce_product
+    username: postgres
+    password: postgres
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
   cloud:
     nacos:
       discovery:

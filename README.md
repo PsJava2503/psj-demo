@@ -142,8 +142,7 @@ Inter-service calls use Spring Cloud OpenFeign with Nacos service discovery.
 
 - JDK 17
 - Maven Wrapper (`./mvnw`)
-- Nacos running at `localhost:8848`
-- Redis running at `localhost:6379`
+- Docker / Docker Compose
 
 #### Recommended startup order
 
@@ -159,9 +158,16 @@ Inter-service calls use Spring Cloud OpenFeign with Nacos service discovery.
 
 #### Build and run
 
-- Full build:
-  - `./mvnw test`
-- Run one module (example):
+- Build runnable jars locally (required before Docker startup):
+  - `./mvnw -DskipTests package`
+- One-command startup (Docker, `dev` by default):
+  - `bash scripts/deploy/up-all.sh dev`
+- One-command stop:
+  - `bash scripts/deploy/down-all.sh dev`
+- Switch environment:
+  - `bash scripts/deploy/up-all.sh test`
+  - `bash scripts/deploy/up-all.sh prod`
+- Run one module directly (non-Docker, optional):
   - `./mvnw -pl psj-commerce-user-service spring-boot:run`
 
 #### Minimal verification flow
@@ -182,6 +188,7 @@ Inter-service calls use Spring Cloud OpenFeign with Nacos service discovery.
 
 - `order-service` uses OpenFeign for remote calls.
 - Ensure all dependent services are registered in Nacos before testing create-order flow.
+- Flyway migrations run automatically at service startup.
 
 ---
 
@@ -329,8 +336,7 @@ com.psj.commerce.<bounded-context>
 
 - JDK 17
 - Maven Wrapper（`./mvnw`）
-- Nacos 已在 `localhost:8848` 运行
-- Redis 已在 `localhost:6379` 运行
+- Docker / Docker Compose
 
 #### 推荐启动顺序
 
@@ -346,9 +352,16 @@ com.psj.commerce.<bounded-context>
 
 #### 构建与运行
 
-- 全量构建：
-  - `./mvnw test`
-- 单模块启动（示例）：
+- 先在本地打可运行 jar（Docker 启动前必须）：
+  - `./mvnw -DskipTests package`
+- 一键启动（Docker，默认 `dev`）：
+  - `bash scripts/deploy/up-all.sh dev`
+- 一键停止：
+  - `bash scripts/deploy/down-all.sh dev`
+- 切换环境：
+  - `bash scripts/deploy/up-all.sh test`
+  - `bash scripts/deploy/up-all.sh prod`
+- 单模块本地直启（非 Docker，可选）：
   - `./mvnw -pl psj-commerce-user-service spring-boot:run`
 
 #### 最小验证流程
@@ -369,3 +382,4 @@ com.psj.commerce.<bounded-context>
 
 - `order-service` 通过 OpenFeign 调用下游服务。
 - 联调前请先确保下游依赖服务都已在 Nacos 注册成功。
+- 服务启动时会自动执行 Flyway 迁移脚本。

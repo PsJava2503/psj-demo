@@ -1,0 +1,2 @@
+-- Initialize Flyway versioning for order-service.
+-- Business tables will be added in later migrations.

@@ -1,0 +1,2 @@
+-- Initialize Flyway versioning for user-service.
+-- Business tables will be added in later migrations.

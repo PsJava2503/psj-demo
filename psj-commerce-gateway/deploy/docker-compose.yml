@@ -1,0 +1,21 @@
+services:
+  app:
+    image: eclipse-temurin:17-jre
+    command: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - ${APP_JAR}:/app/app.jar:ro
+    environment:
+      SERVER_PORT: ${APP_PORT}
+      SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR: ${NACOS_ADDR}
+      SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR: ${NACOS_ADDR}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    networks:
+      - psj-commerce-net
+
+networks:
+  psj-commerce-net:
+    external: true
+    name: ${NETWORK_NAME}
