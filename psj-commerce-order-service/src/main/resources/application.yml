@@ -8,16 +8,3 @@ spring:
     nacos:
       discovery:
         server-addr: localhost:8848
-
-dubbo:
-  application:
-    name: ${spring.application.name}
-  registry:
-    address: nacos://localhost:8848
-  protocol:
-    name: dubbo
-    port: -1
-  consumer:
-    filter: internalSignConsumer
-  provider:
-    filter: internalVerifyProvider

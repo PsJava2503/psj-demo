@@ -45,11 +45,11 @@ Do not reverse this direction.
 - `domain`
   - Holds core business rules, state transitions, and invariants.
   - Contains entities/value objects/domain services/repository contracts.
-  - Does not use Dubbo, HTTP, DB frameworks directly.
+  - Does not use HTTP, DB frameworks, or remote-client frameworks directly.
 
 - `infrastructure`
   - Technical adapters only.
-  - Dubbo providers/consumers, database implementations, external integrations.
+  - HTTP clients/controllers, database implementations, external integrations.
   - Implements interfaces defined by `application.port` or `domain.repository`.
 
 ### 4. Minimal Template (Per Use Case)
@@ -74,16 +74,16 @@ For a new use case, add components in this order:
     - `PaymentCommandPort`
     - `NotificationCommandPort`
     - `OrderRepository`
-  - `infrastructure.rpc.*Client` implements outbound ports
+  - `infrastructure.rpc.*Client` uses OpenFeign to implement outbound ports
   - `infrastructure.persistence.InMemoryOrderRepository` implements repository
 
 - `inventory-service`, `payment-service`, `user-service`, `product-service`, `notification-service`
-  - Controller and Dubbo implementation both depend on corresponding `*UseCase`
+  - Expose HTTP endpoints and depend on corresponding `*UseCase`
   - Domain rules kept in `domain.service`
 
 ### 6. Coding Rules (Team Convention)
 
-- Controller cannot call Dubbo API directly.
+- Controller cannot call remote clients directly; go through `application` use cases.
 - Application service cannot reference concrete infrastructure class names.
 - Infrastructure cannot contain business decision logic.
 - Domain model/state transition should happen in domain layer.
@@ -125,28 +125,16 @@ Required dependencies and config (already applied):
   - `spring.data.redis.host`
   - `spring.data.redis.port`
 
-### 9. Dubbo Internal Signature Skeleton
+### 9. Service-to-Service Calls (Spring Cloud)
 
-Internal Dubbo calls are now protected by a signature skeleton (without nonce replay cache).
+Inter-service calls use Spring Cloud OpenFeign with Nacos service discovery.
 
-- Consumer filter: `internalSignConsumer`
-  - Adds invocation attachments:
-    - `x-internal-service`
-    - `x-internal-ts`
-    - `x-internal-nonce`
-    - `x-internal-sign`
-- Provider filter: `internalVerifyProvider`
-  - Verifies attachment completeness.
-  - Verifies timestamp window (`5 minutes` default).
-  - Verifies HMAC-SHA256 signature.
-- SPI registration:
-  - `META-INF/dubbo/org.apache.dubbo.rpc.Filter`
-
-Secret resolution order:
-
-1. JVM property: `-Dinternal.auth.secret=...`
-2. Environment variable: `INTERNAL_AUTH_SECRET`
-3. Fallback placeholder value (for demo only; replace in real env)
+- Consumer side:
+  - `order-service` Feign clients call dependent services by service name.
+- Provider side:
+  - `user/product/inventory/payment/notification/address` expose HTTP endpoints.
+- Discovery:
+  - `spring.cloud.nacos.discovery.server-addr=localhost:8848`
 
 ### 10. Local Integration Runbook
 
@@ -161,7 +149,7 @@ Secret resolution order:
 
 1. `psj-commerce-user-service`
 2. `psj-commerce-gateway`
-3. RPC provider services:
+3. Dependent business services:
    - `psj-commerce-product-service`
    - `psj-commerce-inventory-service`
    - `psj-commerce-payment-service`
@@ -190,12 +178,10 @@ Secret resolution order:
    - Invalid/expired token -> `401`
    - Insufficient permission -> `403`
 
-#### Internal signature notes
+#### Inter-service call notes
 
-- Set shared secret consistently for all Dubbo services:
-  - JVM property: `-Dinternal.auth.secret=<your-secret>`
-  - or env: `INTERNAL_AUTH_SECRET=<your-secret>`
-- If secrets differ between caller/provider, Dubbo call will fail with signature error.
+- `order-service` uses OpenFeign for remote calls.
+- Ensure all dependent services are registered in Nacos before testing create-order flow.
 
 ---
 
@@ -246,11 +232,11 @@ com.psj.commerce.<bounded-context>
 - `domain`
   - 承载核心业务规则、状态流转和不变量。
   - 包含实体/值对象/领域服务/仓储契约。
-  - 不直接使用 Dubbo、HTTP、数据库框架。
+  - 不直接使用 HTTP、数据库框架或远程调用框架。
 
 - `infrastructure`
   - 只放技术适配器。
-  - 包含 Dubbo 提供者/消费者、数据库实现和外部系统接入。
+  - 包含 HTTP 客户端/控制器、数据库实现和外部系统接入。
   - 实现 `application.port` 或 `domain.repository` 定义的接口。
 
 ### 4. 每个用例的最小模板
@@ -275,16 +261,16 @@ com.psj.commerce.<bounded-context>
     - `PaymentCommandPort`
     - `NotificationCommandPort`
     - `OrderRepository`
-  - `infrastructure.rpc.*Client` 实现外部调用端口
+  - `infrastructure.rpc.*Client` 使用 OpenFeign 实现外部调用端口
   - `infrastructure.persistence.InMemoryOrderRepository` 实现仓储接口
 
 - `inventory-service`、`payment-service`、`user-service`、`product-service`、`notification-service`
-  - Controller 和 Dubbo 实现统一依赖对应 `*UseCase`
+  - 通过 HTTP 暴露能力并统一依赖对应 `*UseCase`
   - 领域规则放在 `domain.service`
 
 ### 6. 编码约束（团队规范）
 
-- Controller 不能直接调用 Dubbo API。
+- Controller 不能直接调用远程客户端，应通过 `application` 用例编排。
 - Application Service 不能引用具体基础设施类名。
 - Infrastructure 层不能承载业务决策逻辑。
 - 领域模型与状态流转必须放在 Domain 层。
@@ -326,28 +312,16 @@ com.psj.commerce.<bounded-context>
   - `spring.data.redis.host`
   - `spring.data.redis.port`
 
-### 9. Dubbo 服务间签名骨架
+### 9. Spring Cloud 服务间调用
 
-当前 Dubbo 内部调用已接入签名骨架（不包含 Redis nonce 防重放）。
+当前服务间调用采用 Spring Cloud OpenFeign + Nacos 服务发现。
 
-- Consumer 过滤器：`internalSignConsumer`
-  - 自动附加调用附件：
-    - `x-internal-service`
-    - `x-internal-ts`
-    - `x-internal-nonce`
-    - `x-internal-sign`
-- Provider 过滤器：`internalVerifyProvider`
-  - 校验附件完整性
-  - 校验时间窗（默认 5 分钟）
-  - 校验 HMAC-SHA256 签名
-- SPI 注册文件：
-  - `META-INF/dubbo/org.apache.dubbo.rpc.Filter`
-
-签名密钥读取顺序：
-
-1. JVM 启动参数：`-Dinternal.auth.secret=...`
-2. 环境变量：`INTERNAL_AUTH_SECRET`
-3. 默认占位值（仅用于 demo，生产必须替换）
+- 调用方：
+  - `order-service` 中的 Feign Client 按服务名调用下游服务。
+- 提供方：
+  - `user/product/inventory/payment/notification/address` 通过 HTTP 接口提供能力。
+- 服务发现：
+  - 统一使用 `spring.cloud.nacos.discovery.server-addr=localhost:8848`
 
 ### 10. 本地联调步骤
 
@@ -362,7 +336,7 @@ com.psj.commerce.<bounded-context>
 
 1. `psj-commerce-user-service`
 2. `psj-commerce-gateway`
-3. 各 Dubbo Provider 服务：
+3. 下游依赖服务：
    - `psj-commerce-product-service`
    - `psj-commerce-inventory-service`
    - `psj-commerce-payment-service`
@@ -391,9 +365,7 @@ com.psj.commerce.<bounded-context>
    - token 无效/过期 -> `401`
    - 权限不足 -> `403`
 
-#### 服务间签名注意事项
+#### 服务间调用注意事项
 
-- 所有 Dubbo 服务必须使用同一套共享密钥：
-  - JVM 参数：`-Dinternal.auth.secret=<your-secret>`
-  - 或环境变量：`INTERNAL_AUTH_SECRET=<your-secret>`
-- 调用方和被调方密钥不一致时，会出现签名校验失败。
+- `order-service` 通过 OpenFeign 调用下游服务。
+- 联调前请先确保下游依赖服务都已在 Nacos 注册成功。

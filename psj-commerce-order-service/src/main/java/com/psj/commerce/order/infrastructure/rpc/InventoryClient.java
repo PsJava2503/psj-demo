@@ -1,19 +1,15 @@
 package com.psj.commerce.order.infrastructure.rpc;
 
-import com.psj.commerce.api.InventoryRpcService;
 import com.psj.commerce.order.application.port.InventoryCommandPort;
-import org.apache.dubbo.config.annotation.DubboReference;
-import org.springframework.stereotype.Component;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-@Component
-public class InventoryClient implements InventoryCommandPort {
-
-	@DubboReference(check = false)
-	private InventoryRpcService inventoryRpcService;
+@FeignClient(name = "psj-commerce-inventory-service")
+public interface InventoryClient extends InventoryCommandPort {
 
 	@Override
-	public boolean deductStock(Long productId, Integer quantity) {
-		return inventoryRpcService.deductStock(productId, quantity);
-	}
+	@PostMapping("/api/inventory/deduct")
+	boolean deductStock(@RequestParam("productId") Long productId, @RequestParam("quantity") Integer quantity);
 
 }

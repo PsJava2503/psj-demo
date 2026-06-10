@@ -1,19 +1,15 @@
 package com.psj.commerce.order.infrastructure.rpc;
 
-import com.psj.commerce.api.UserRpcService;
 import com.psj.commerce.order.application.port.UserQueryPort;
-import org.apache.dubbo.config.annotation.DubboReference;
-import org.springframework.stereotype.Component;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
-@Component
-public class UserClient implements UserQueryPort {
-
-	@DubboReference(check = false)
-	private UserRpcService userRpcService;
+@FeignClient(name = "psj-commerce-user-service")
+public interface UserClient extends UserQueryPort {
 
 	@Override
-	public String getUserName(Long userId) {
-		return userRpcService.getUserName(userId);
-	}
+	@GetMapping("/api/users/{userId}")
+	String getUserName(@PathVariable("userId") Long userId);
 
 }

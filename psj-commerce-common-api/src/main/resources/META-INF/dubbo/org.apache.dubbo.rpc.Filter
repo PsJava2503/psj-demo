@@ -1,2 +1,0 @@
-internalSignConsumer=com.psj.commerce.security.internal.DubboSignConsumerFilter
-internalVerifyProvider=com.psj.commerce.security.internal.DubboVerifyProviderFilter

@@ -1,20 +1,16 @@
 package com.psj.commerce.order.infrastructure.rpc;
 
-import com.psj.commerce.api.ProductRpcService;
 import com.psj.commerce.order.application.port.ProductQueryPort;
 import java.math.BigDecimal;
-import org.apache.dubbo.config.annotation.DubboReference;
-import org.springframework.stereotype.Component;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
-@Component
-public class ProductClient implements ProductQueryPort {
-
-	@DubboReference(check = false)
-	private ProductRpcService productRpcService;
+@FeignClient(name = "psj-commerce-product-service")
+public interface ProductClient extends ProductQueryPort {
 
 	@Override
-	public BigDecimal getPrice(Long productId) {
-		return productRpcService.getPrice(productId);
-	}
+	@GetMapping("/api/products/{productId}/price")
+	BigDecimal getPrice(@PathVariable("productId") Long productId);
 
 }

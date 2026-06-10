@@ -1,19 +1,15 @@
 package com.psj.commerce.order.infrastructure.rpc;
 
-import com.psj.commerce.api.NotificationRpcService;
 import com.psj.commerce.order.application.port.NotificationCommandPort;
-import org.apache.dubbo.config.annotation.DubboReference;
-import org.springframework.stereotype.Component;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-@Component
-public class NotificationClient implements NotificationCommandPort {
-
-	@DubboReference(check = false)
-	private NotificationRpcService notificationRpcService;
+@FeignClient(name = "psj-commerce-notification-service")
+public interface NotificationClient extends NotificationCommandPort {
 
 	@Override
-	public void notifyOrderPaid(Long orderId) {
-		notificationRpcService.notifyOrderPaid(orderId);
-	}
+	@PostMapping("/api/notifications/order-paid")
+	void notifyOrderPaid(@RequestParam("orderId") Long orderId);
 
 }

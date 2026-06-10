@@ -10,10 +10,4 @@
 	<artifactId>psj-commerce-common-api</artifactId>
 	<name>psj-commerce-common-api</name>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.apache.dubbo</groupId>
-			<artifactId>dubbo</artifactId>
-		</dependency>
-	</dependencies>
 </project>

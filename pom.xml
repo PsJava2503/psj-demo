@@ -32,7 +32,6 @@
 		<spring-framework.version>6.1.15</spring-framework.version>
 		<spring-cloud.version>2023.0.5</spring-cloud.version>
 		<spring-cloud-alibaba.version>2023.0.3.3</spring-cloud-alibaba.version>
-		<dubbo.version>3.3.2</dubbo.version>
 		<sa-token.version>1.39.0</sa-token.version>
 	</properties>
 
@@ -49,13 +48,6 @@
 				<groupId>com.alibaba.cloud</groupId>
 				<artifactId>spring-cloud-alibaba-dependencies</artifactId>
 				<version>${spring-cloud-alibaba.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.dubbo</groupId>
-				<artifactId>dubbo-bom</artifactId>
-				<version>${dubbo.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -83,6 +75,11 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework</groupId>
+				<artifactId>spring-context-support</artifactId>
+				<version>${spring-framework.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
 				<artifactId>spring-core</artifactId>
 				<version>${spring-framework.version}</version>
 			</dependency>
@@ -94,6 +91,16 @@
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-jcl</artifactId>
+				<version>${spring-framework.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-oxm</artifactId>
+				<version>${spring-framework.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-tx</artifactId>
 				<version>${spring-framework.version}</version>
 			</dependency>
 			<dependency>

@@ -1,20 +1,16 @@
 package com.psj.commerce.order.infrastructure.rpc;
 
-import com.psj.commerce.api.PaymentRpcService;
 import com.psj.commerce.order.application.port.PaymentCommandPort;
 import java.math.BigDecimal;
-import org.apache.dubbo.config.annotation.DubboReference;
-import org.springframework.stereotype.Component;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-@Component
-public class PaymentClient implements PaymentCommandPort {
-
-	@DubboReference(check = false)
-	private PaymentRpcService paymentRpcService;
+@FeignClient(name = "psj-commerce-payment-service")
+public interface PaymentClient extends PaymentCommandPort {
 
 	@Override
-	public String pay(Long orderId, BigDecimal amount) {
-		return paymentRpcService.pay(orderId, amount);
-	}
+	@PostMapping("/api/payments/pay")
+	String pay(@RequestParam("orderId") Long orderId, @RequestParam("amount") BigDecimal amount);
 
 }

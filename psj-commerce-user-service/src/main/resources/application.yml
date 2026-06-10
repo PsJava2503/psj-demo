@@ -13,21 +13,6 @@ spring:
       discovery:
         server-addr: localhost:8848
 
-dubbo:
-  application:
-    name: ${spring.application.name}
-  protocol:
-    name: dubbo
-    port: 20883
-  registry:
-    address: nacos://localhost:8848
-  scan:
-    base-packages: com.psj.commerce.user
-  consumer:
-    filter: internalSignConsumer
-  provider:
-    filter: internalVerifyProvider
-
 sa-token:
   token-name: satoken
   timeout: 86400
