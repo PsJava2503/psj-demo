@@ -2,7 +2,6 @@ package com.commerce.order.application.service;
 
 import com.commerce.order.application.command.CreateOrderCommand;
 import com.commerce.order.application.port.InventoryCommandPort;
-import com.commerce.order.application.port.NotificationCommandPort;
 import com.commerce.order.application.port.OrderUseCase;
 import com.commerce.order.application.port.PaymentCommandPort;
 import com.commerce.order.application.port.ProductQueryPort;
@@ -23,7 +22,6 @@ public class OrderApplicationService implements OrderUseCase {
 	private final ProductQueryPort productQueryPort;
 	private final InventoryCommandPort inventoryCommandPort;
 	private final PaymentCommandPort paymentCommandPort;
-	private final NotificationCommandPort notificationCommandPort;
 
 	public OrderApplicationService(
 			OrderDomainService orderDomainService,
@@ -31,8 +29,7 @@ public class OrderApplicationService implements OrderUseCase {
 			UserQueryPort userQueryPort,
 			ProductQueryPort productQueryPort,
 			InventoryCommandPort inventoryCommandPort,
-			PaymentCommandPort paymentCommandPort,
-			NotificationCommandPort notificationCommandPort
+			PaymentCommandPort paymentCommandPort
 	) {
 		this.orderDomainService = orderDomainService;
 		this.orderRepository = orderRepository;
@@ -40,7 +37,6 @@ public class OrderApplicationService implements OrderUseCase {
 		this.productQueryPort = productQueryPort;
 		this.inventoryCommandPort = inventoryCommandPort;
 		this.paymentCommandPort = paymentCommandPort;
-		this.notificationCommandPort = notificationCommandPort;
 	}
 
 	@Override
@@ -56,11 +52,17 @@ public class OrderApplicationService implements OrderUseCase {
 		}
 
 		order.markStockDeducted();
-		String paymentStatus = paymentCommandPort.pay(order.orderId(), order.amount());
-		order.markPaid();
-		notificationCommandPort.notifyOrderPaid(order.orderId());
-		order.complete();
+		order.waitPay();
 		orderRepository.save(order);
+		String paymentStatus = paymentCommandPort.preCreate(
+				order.orderId(),
+				order.amount(),
+				"order-" + order.orderId()
+		);
+		if (paymentStatus.startsWith("PAY_FAILED")) {
+			order.fail();
+			orderRepository.save(order);
+		}
 
 		return "Order " + order.orderId() + " created for " + fullNameOf(user) + ", amount=" + order.amount() + ", payment=" + paymentStatus;
 	}

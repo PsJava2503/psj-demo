@@ -24,6 +24,10 @@ public class Order {
 		this.status = OrderStatus.STOCK_DEDUCTED;
 	}
 
+	public void waitPay() {
+		this.status = OrderStatus.WAIT_PAY;
+	}
+
 	public void markPaid() {
 		this.status = OrderStatus.PAID;
 	}

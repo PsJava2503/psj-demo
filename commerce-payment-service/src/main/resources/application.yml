@@ -16,3 +16,12 @@ spring:
     nacos:
       discovery:
         server-addr: localhost:8848
+
+payment:
+  order-timeout-minutes: 30
+  alipay:
+    gateway-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do
+    app-id: ${ALIPAY_APP_ID:}
+    app-private-key: ${ALIPAY_APP_PRIVATE_KEY:}
+    alipay-public-key: ${ALIPAY_PUBLIC_KEY:}
+    notify-url: ${ALIPAY_NOTIFY_URL:}

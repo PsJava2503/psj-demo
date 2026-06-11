@@ -2,6 +2,7 @@ package com.commerce.payment.interfaces.rest;
 
 import com.commerce.payment.application.port.PaymentUseCase;
 import java.math.BigDecimal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,5 +21,19 @@ public class InternalPaymentController {
 	@PostMapping("/pay")
 	public String pay(@RequestParam Long orderId, @RequestParam BigDecimal amount) {
 		return paymentUseCase.pay(orderId, amount);
+	}
+
+	@PostMapping("/precreate")
+	public String preCreate(
+			@RequestParam Long orderId,
+			@RequestParam BigDecimal amount,
+			@RequestParam(required = false) String subject
+	) {
+		return paymentUseCase.preCreate(orderId, amount, subject);
+	}
+
+	@GetMapping("/query")
+	public String query(@RequestParam Long orderId) {
+		return paymentUseCase.query(orderId);
 	}
 }

@@ -4,6 +4,6 @@ import java.math.BigDecimal;
 
 public interface PaymentCommandPort {
 
-	String pay(Long orderId, BigDecimal amount);
+	String preCreate(Long orderId, BigDecimal amount, String subject);
 
 }
