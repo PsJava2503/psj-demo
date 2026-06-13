@@ -17,4 +17,12 @@ public interface PaymentClient extends PaymentCommandPort {
 			@RequestParam("subject") String subject
 	);
 
+	@Override
+	@PostMapping("/internal/payments/refund")
+	String refund(
+			@RequestParam("orderId") Long orderId,
+			@RequestParam("amount") BigDecimal amount,
+			@RequestParam("reason") String reason
+	);
+
 }

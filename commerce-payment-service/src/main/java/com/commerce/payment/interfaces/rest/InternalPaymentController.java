@@ -36,4 +36,13 @@ public class InternalPaymentController {
 	public String query(@RequestParam Long orderId) {
 		return paymentUseCase.query(orderId);
 	}
+
+	@PostMapping("/refund")
+	public String refund(
+			@RequestParam Long orderId,
+			@RequestParam BigDecimal amount,
+			@RequestParam(required = false) String reason
+	) {
+		return paymentUseCase.refund(orderId, amount, reason);
+	}
 }

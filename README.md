@@ -1,6 +1,6 @@
 # Commerce Demo
 
-A Spring Boot microservice demo for a commerce domain. The project includes user authentication, RBAC, order creation, product, inventory, payment, notification, address, and gateway services.
+A Spring Boot microservice demo for a commerce domain. The project includes user authentication, RBAC, product and address persistence, order creation, inventory reservation, payment, notification, fulfillment, and gateway services.
 
 ## Modules
 
@@ -9,12 +9,12 @@ A Spring Boot microservice demo for a commerce domain. The project includes user
 | `commerce-contracts` | Shared DTOs, security constants, headers, and messaging contracts. |
 | `commerce-gateway` | Spring Cloud Gateway entry point, token validation, permission checks, and context propagation. |
 | `commerce-user-service` | User profile, credentials, registration, login, RBAC roles and permissions. |
-| `commerce-order-service` | Order use cases and orchestration across user, product, inventory, payment, and notification services. |
-| `commerce-product-service` | Product read APIs. |
-| `commerce-inventory-service` | Inventory APIs. |
+| `commerce-order-service` | Order creation, status transitions, order outbox, inventory reservation orchestration, payment event handling, and fulfillment APIs. |
+| `commerce-product-service` | Product CRUD, price lookup, and SKU mapping APIs. |
+| `commerce-inventory-service` | Inventory APIs, stock reservation, release, and confirmation. |
 | `commerce-payment-service` | Payment APIs. |
-| `commerce-notification-service` | Notification APIs and message handling. |
-| `commerce-address-service` | Address APIs and user address slot support. |
+| `commerce-notification-service` | Notification APIs, idempotent notification records, and message handling. |
+| `commerce-address-service` | Address CRUD APIs and default address support. |
 
 ## Tech Stack
 
@@ -105,6 +105,120 @@ Examples:
 bash scripts/deploy/up-all.sh test
 bash scripts/deploy/down-all.sh test
 ```
+
+## Commerce Flow
+
+The core order flow is eventually consistent. The order service performs the local order transaction, reserves stock synchronously, then uses outbox events to drive downstream side effects.
+
+Normal flow:
+
+```text
+Create order
+  -> load user, product, and address
+  -> persist order, order item, and status log
+  -> reserve inventory by skuId
+  -> persist reservation ids
+  -> move order to WAIT_PAY
+  -> pre-create payment
+  -> write ORDER_WAIT_PAY and notification outbox events
+  -> payment-service emits payment.paid through its outbox
+  -> order-service marks order PAID
+  -> order outbox confirms inventory and sends notification
+  -> order moves to WAIT_SHIP
+  -> ship, receive, complete through fulfillment APIs
+```
+
+Main order states:
+
+```text
+CREATED
+-> STOCK_RESERVED
+-> WAIT_PAY
+-> PAID
+-> INVENTORY_CONFIRMING
+-> WAIT_SHIP
+-> SHIPPED
+-> RECEIVED
+-> COMPLETED
+```
+
+Failure and compensation states:
+
+```text
+WAIT_PAY -> CANCELLED
+WAIT_PAY -> FAILED
+PAID -> INVENTORY_CONFIRMING -> INVENTORY_CONFIRM_FAILED
+CANCELLED/FAILED + payment.paid -> REFUND_REQUIRED -> REFUNDED
+```
+
+Inventory semantics:
+
+- Order creation reserves stock: available quantity is moved to locked quantity.
+- Payment success confirms stock: locked quantity is consumed through outbound inventory.
+- Cancelled or failed orders release stock through order outbox events.
+
+Outbox semantics:
+
+- `payment-service` uses payment outbox to publish `payment.paid`.
+- `order-service` uses order outbox for `ORDER_WAIT_PAY`, inventory confirm/release, notification requests, and refund requests.
+- Order outbox events are claimed before processing, so multiple service instances do not process the same event at the same time.
+- Order status updates use optimistic locking through `orders.version`.
+
+## Product, Address, and Order APIs
+
+Product APIs:
+
+```text
+POST   /api/products
+PUT    /api/products/{productId}
+DELETE /api/products/{productId}
+GET    /api/products
+GET    /api/products/{productId}
+GET    /api/products/{productId}/price
+```
+
+Address APIs:
+
+```text
+POST   /api/addresses
+PUT    /api/addresses/{addressId}
+DELETE /api/addresses/{addressId}
+GET    /api/addresses
+GET    /api/addresses/{addressId}
+GET    /api/addresses/{userId}/default
+```
+
+Create an order:
+
+```bash
+curl -X POST http://localhost:8080/api/orders \
+  -H 'Content-Type: application/json' \
+  -H 'satoken: <token>' \
+  -d '{
+    "userId": 1,
+    "productId": 1,
+    "addressId": 1,
+    "quantity": 2
+  }'
+```
+
+Order APIs:
+
+```text
+POST   /api/orders
+GET    /api/orders
+GET    /api/orders/{orderId}
+DELETE /api/orders/{orderId}
+POST   /api/orders/{orderId}/ship
+POST   /api/orders/{orderId}/receive
+POST   /api/orders/{orderId}/complete
+```
+
+Payment and refund notes:
+
+- Payment pre-create is called by the order service after stock is reserved.
+- If payment pre-create fails, the order becomes `FAILED` and inventory release is requested through order outbox.
+- If `payment.paid` is received for a `CANCELLED` or `FAILED` order, the order becomes `REFUND_REQUIRED`; order outbox calls payment refund and then moves the order to `REFUNDED`.
 
 ## Run One Service Locally
 
@@ -224,6 +338,11 @@ bash scripts/install-git-hooks.sh
 ## Notes
 
 - Flyway migrations run automatically when services start.
+- Product, address, order, payment, inventory, and notification data are persisted with PostgreSQL and MyBatis Dynamic SQL.
+- Order IDs are internal numeric identifiers. `order_no` is the external business order number.
+- Orders store product and address snapshots so historical orders are not affected by later product price or address changes.
+- Order state changes are guarded by optimistic locking with the `orders.version` column.
 - Gateway routes `/api/auth/**`, `/api/users/**`, and `/api/rbac/**` to `commerce-user-service`.
 - `/api/auth/login` and `/api/auth/register` are public. Other `/api/**` requests require a valid `satoken` header.
 - Current gateway permission checks are path-based. Service-level method authorization can be added later with annotations if finer authorization is needed.
+- JDK 17 must be available through a valid `JAVA_HOME` before running Maven Wrapper commands.

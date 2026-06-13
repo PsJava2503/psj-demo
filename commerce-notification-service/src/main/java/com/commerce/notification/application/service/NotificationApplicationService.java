@@ -14,8 +14,18 @@ public class NotificationApplicationService implements NotificationUseCase {
 	}
 
 	@Override
+	public void notifyOrderWaitPay(Long orderId) {
+		notificationDomainService.notifyOrderWaitPay(orderId);
+	}
+
+	@Override
 	public void notifyOrderPaid(Long orderId) {
 		notificationDomainService.notifyOrderPaid(orderId);
+	}
+
+	@Override
+	public void notifyOrderCancelled(Long orderId) {
+		notificationDomainService.notifyOrderCancelled(orderId);
 	}
 
 }

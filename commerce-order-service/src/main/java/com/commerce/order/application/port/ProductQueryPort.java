@@ -1,9 +1,9 @@
 package com.commerce.order.application.port;
 
-import java.math.BigDecimal;
+import com.commerce.product.ProductResponse;
 
 public interface ProductQueryPort {
 
-	BigDecimal getPrice(Long productId);
+	ProductResponse getProduct(Long productId);
 
 }

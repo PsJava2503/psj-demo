@@ -1,7 +1,13 @@
 package com.commerce.order.application.port;
 
+import java.util.List;
+
 public interface InventoryCommandPort {
 
-	boolean deductStock(Long productId, Integer quantity);
+	List<Long> reserveStock(Long skuId, Integer quantity, Long orderId);
+
+	void releaseStock(List<Long> reservationIds, Long orderId);
+
+	void confirmStock(List<Long> reservationIds, Long orderId);
 
 }

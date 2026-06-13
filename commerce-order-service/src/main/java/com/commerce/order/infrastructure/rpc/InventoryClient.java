@@ -1,7 +1,9 @@
 package com.commerce.order.infrastructure.rpc;
 
 import com.commerce.order.application.port.InventoryCommandPort;
+import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -9,7 +11,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface InventoryClient extends InventoryCommandPort {
 
 	@Override
-	@PostMapping("/internal/inventory/deduct")
-	boolean deductStock(@RequestParam("productId") Long productId, @RequestParam("quantity") Integer quantity);
+	@PostMapping("/internal/inventory/reserve")
+	List<Long> reserveStock(
+			@RequestParam("skuId") Long skuId,
+			@RequestParam("quantity") Integer quantity,
+			@RequestParam("orderId") Long orderId
+	);
+
+	@Override
+	@PostMapping("/internal/inventory/release")
+	void releaseStock(@RequestBody List<Long> reservationIds, @RequestParam("orderId") Long orderId);
+
+	@Override
+	@PostMapping("/internal/inventory/confirm")
+	void confirmStock(@RequestBody List<Long> reservationIds, @RequestParam("orderId") Long orderId);
 
 }

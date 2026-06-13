@@ -25,6 +25,12 @@ public interface InventoryUseCase {
 
 	boolean available(Long productId);
 
+	List<Long> reserveStock(Long skuId, Integer quantity, Long orderId);
+
+	void releaseStock(List<Long> reservationIds, Long orderId);
+
+	void confirmStock(List<Long> reservationIds, Long orderId);
+
 	void inbound(InboundRequest request);
 
 	void outbound(OutboundRequest request);

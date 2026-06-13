@@ -6,7 +6,11 @@ import java.util.List;
 
 public interface OrderRepository {
 
-	void save(Order order);
+	int create(Order order);
+
+	int update(Order order, OrderQueryOptions options);
+
+	int delete(OrderQueryOptions options);
 
 	List<Order> query(OrderQueryOptions options);
 

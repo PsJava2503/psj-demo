@@ -74,6 +74,103 @@ public class InventoryApplicationService implements InventoryUseCase {
 
 	@Override
 	@Transactional
+	public List<Long> reserveStock(Long skuId, Integer quantity, Long orderId) {
+		if (skuId == null || quantity == null || quantity <= 0) {
+			return List.of();
+		}
+		List<BinBalance> candidates = repository.queryBinBalances(new BinBalanceQueryOptions(
+				Optional.of(skuId),
+				Optional.empty()
+		)).stream()
+				.filter(balance -> balance.quantity() - balance.lockQty() > 0)
+				.sorted(Comparator.comparing(BinBalance::id))
+				.toList();
+		Map<Long, BinInfo> binInfos = repository.queryBinInfos(
+				BinQueryOptions.byIds(candidates.stream().map(BinBalance::binId).distinct().toList()));
+		long remaining = quantity;
+		List<Locking> lockings = new ArrayList<>();
+		for (BinBalance balance : candidates) {
+			if (remaining <= 0) {
+				break;
+			}
+			BinInfo binInfo = binInfos.get(balance.binId());
+			if (binInfo == null || binInfo.disable()) {
+				continue;
+			}
+			long availableQuantity = balance.quantity() - balance.lockQty();
+			long lockQuantity = Math.min(remaining, availableQuantity);
+			lockings.add(new Locking(skuId, balance.binId(), binInfo.warehouseId(), lockQuantity));
+			remaining -= lockQuantity;
+		}
+		if (remaining > 0) {
+			return List.of();
+		}
+		return lock(new LockRequest(
+				TransactionType.OutSalesDelivery,
+				lockings,
+				orderId,
+				null,
+				"reserve order stock",
+				"reserve order stock",
+				List.of()
+		));
+	}
+
+	@Override
+	@Transactional
+	public void releaseStock(List<Long> reservationIds, Long orderId) {
+		List<OutBounding> items = reservationItems(reservationIds);
+		if (items.isEmpty()) {
+			return;
+		}
+		unlock(new UnlockRequest(
+				TransactionType.OutSalesDelivery,
+				items,
+				orderId,
+				null,
+				"release order stock",
+				"release order stock",
+				true,
+				List.of()
+		));
+	}
+
+	@Override
+	@Transactional
+	public void confirmStock(List<Long> reservationIds, Long orderId) {
+		List<OutBounding> items = reservationItems(reservationIds);
+		if (items.isEmpty()) {
+			return;
+		}
+		outbound(new OutboundRequest(
+				TransactionType.OutSalesDelivery,
+				items,
+				orderId,
+				null,
+				"confirm order stock",
+				List.of()
+		));
+	}
+
+	private List<OutBounding> reservationItems(List<Long> reservationIds) {
+		return safeList(reservationIds).stream()
+				.map(reservationId -> repository.queryReservations(ReservationQueryOptions.byId(reservationId)).stream()
+						.findFirst()
+						.orElse(null))
+				.filter(Objects::nonNull)
+				.filter(reservation -> reservation.remaining() > 0)
+				.map(reservation -> new OutBounding(
+						reservation.skuId(),
+						reservation.binId(),
+						reservation.remaining(),
+						reservation.id(),
+						null
+				))
+				.toList();
+	}
+
+	@Override
+	@Transactional
 	public void inbound(InboundRequest request) {
 		List<InBounding> items = safeList(request.items());
 		if (items.isEmpty()) {

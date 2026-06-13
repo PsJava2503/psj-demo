@@ -27,6 +27,21 @@ public class InternalInventoryController {
 		return inventoryUseCase.deductStock(productId, quantity);
 	}
 
+	@PostMapping("/reserve")
+	public List<Long> reserve(@RequestParam Long skuId, @RequestParam Integer quantity, @RequestParam Long orderId) {
+		return inventoryUseCase.reserveStock(skuId, quantity, orderId);
+	}
+
+	@PostMapping("/release")
+	public void release(@RequestBody List<Long> reservationIds, @RequestParam Long orderId) {
+		inventoryUseCase.releaseStock(reservationIds, orderId);
+	}
+
+	@PostMapping("/confirm")
+	public void confirm(@RequestBody List<Long> reservationIds, @RequestParam Long orderId) {
+		inventoryUseCase.confirmStock(reservationIds, orderId);
+	}
+
 	@PostMapping("/inbound")
 	public void inbound(@RequestBody InboundRequest request) {
 		inventoryUseCase.inbound(request);
