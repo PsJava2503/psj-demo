@@ -10,4 +10,12 @@
 	<artifactId>commerce-contracts</artifactId>
 	<name>commerce-contracts</name>
 
+	<dependencies>
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>3.5.17</version>
+		</dependency>
+	</dependencies>
+
 </project>

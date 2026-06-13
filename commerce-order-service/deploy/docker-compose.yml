@@ -15,7 +15,9 @@ services:
     ports:
       - "${DB_PORT}:5432"
     networks:
-      - commerce-net
+      commerce-net:
+        aliases:
+          - ${DB_HOST}
 
   app:
     image: eclipse-temurin:17-jre
@@ -25,7 +27,7 @@ services:
     environment:
       SERVER_PORT: ${APP_PORT}
       SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR: ${NACOS_ADDR}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_FLYWAY_ENABLED: "true"

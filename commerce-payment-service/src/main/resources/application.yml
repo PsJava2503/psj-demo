@@ -25,3 +25,6 @@ payment:
     app-private-key: ${ALIPAY_APP_PRIVATE_KEY:}
     alipay-public-key: ${ALIPAY_PUBLIC_KEY:}
     notify-url: ${ALIPAY_NOTIFY_URL:}
+
+mybatis:
+  type-handlers-package: com.commerce.mybatis

@@ -42,3 +42,65 @@ spring:
           uri: lb://commerce-address-service
           predicates:
             - Path=/api/addresses/**
+        - id: commerce-order-service-openapi
+          uri: lb://commerce-order-service
+          predicates:
+            - Path=/v3/api-docs/order
+          filters:
+            - RewritePath=/v3/api-docs/order, /v3/api-docs
+        - id: commerce-user-service-openapi
+          uri: lb://commerce-user-service
+          predicates:
+            - Path=/v3/api-docs/user
+          filters:
+            - RewritePath=/v3/api-docs/user, /v3/api-docs
+        - id: commerce-product-service-openapi
+          uri: lb://commerce-product-service
+          predicates:
+            - Path=/v3/api-docs/product
+          filters:
+            - RewritePath=/v3/api-docs/product, /v3/api-docs
+        - id: commerce-payment-service-openapi
+          uri: lb://commerce-payment-service
+          predicates:
+            - Path=/v3/api-docs/payment
+          filters:
+            - RewritePath=/v3/api-docs/payment, /v3/api-docs
+        - id: commerce-inventory-service-openapi
+          uri: lb://commerce-inventory-service
+          predicates:
+            - Path=/v3/api-docs/inventory
+          filters:
+            - RewritePath=/v3/api-docs/inventory, /v3/api-docs
+        - id: commerce-notification-service-openapi
+          uri: lb://commerce-notification-service
+          predicates:
+            - Path=/v3/api-docs/notification
+          filters:
+            - RewritePath=/v3/api-docs/notification, /v3/api-docs
+        - id: commerce-address-service-openapi
+          uri: lb://commerce-address-service
+          predicates:
+            - Path=/v3/api-docs/address
+          filters:
+            - RewritePath=/v3/api-docs/address, /v3/api-docs
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: Gateway
+        url: /v3/api-docs
+      - name: Order
+        url: /v3/api-docs/order
+      - name: User
+        url: /v3/api-docs/user
+      - name: Product
+        url: /v3/api-docs/product
+      - name: Payment
+        url: /v3/api-docs/payment
+      - name: Inventory
+        url: /v3/api-docs/inventory
+      - name: Notification
+        url: /v3/api-docs/notification
+      - name: Address
+        url: /v3/api-docs/address

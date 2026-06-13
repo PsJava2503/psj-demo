@@ -206,4 +206,84 @@ public class Order {
 		return updateTime;
 	}
 
+	public Long getOrderId() {
+		return orderId;
+	}
+
+	public String getOrderNo() {
+		return orderNo;
+	}
+
+	public Long getUserId() {
+		return userId;
+	}
+
+	public Long getProductId() {
+		return productId;
+	}
+
+	public Long getSkuId() {
+		return skuId;
+	}
+
+	public String getProductName() {
+		return productName;
+	}
+
+	public BigDecimal getUnitPrice() {
+		return unitPrice;
+	}
+
+	public Integer getQuantity() {
+		return quantity;
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
+	public Long getAddressId() {
+		return addressId;
+	}
+
+	public String getRecipientName() {
+		return recipientName;
+	}
+
+	public String getRecipientPhone() {
+		return recipientPhone;
+	}
+
+	public String getProvince() {
+		return province;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public String getDistrict() {
+		return district;
+	}
+
+	public String getAddressDetail() {
+		return addressDetail;
+	}
+
+	public Long getVersion() {
+		return version;
+	}
+
+	public ZonedDateTime getCreateTime() {
+		return createTime;
+	}
+
+	public ZonedDateTime getUpdateTime() {
+		return updateTime;
+	}
+
+	public OrderStatus getStatus() {
+		return status;
+	}
+
 }

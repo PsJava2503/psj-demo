@@ -138,6 +138,7 @@ compose_up() {
   local app_port="$2"
   local db_name="${3:-}"
   local db_port="${4:-0}"
+  local db_host="${module##*/}-postgres"
   local app_jar
 
   app_jar="$(resolve_app_jar "$module")"
@@ -156,6 +157,7 @@ compose_up() {
   APP_PORT="$app_port" \
   APP_JAR="$app_jar" \
   DB_NAME="$db_name" \
+  DB_HOST="$db_host" \
   DB_PORT="$db_port" \
   DB_USER="$DB_USER" \
   DB_PASSWORD="$DB_PASSWORD" \

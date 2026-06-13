@@ -27,3 +27,6 @@ sa-token:
   active-timeout: -1
   is-concurrent: true
   is-share: false
+
+mybatis:
+  type-handlers-package: com.commerce.mybatis

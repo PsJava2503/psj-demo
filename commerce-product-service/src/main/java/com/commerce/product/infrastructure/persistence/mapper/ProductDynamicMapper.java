@@ -9,6 +9,7 @@ import static com.commerce.product.infrastructure.persistence.mapper.ProductDyna
 import static com.commerce.product.infrastructure.persistence.mapper.ProductDynamicSqlSupport.products;
 import static com.commerce.product.infrastructure.persistence.mapper.ProductDynamicSqlSupport.skuId;
 import static com.commerce.product.infrastructure.persistence.mapper.ProductDynamicSqlSupport.updateTime;
+import static org.mybatis.dynamic.sql.SqlBuilder.isEqualTo;
 import static org.mybatis.dynamic.sql.SqlBuilder.isEqualToWhenPresent;
 
 import com.commerce.product.domain.model.ProductQueryOptions;
@@ -105,7 +106,8 @@ public interface ProductDynamicMapper {
 	default List<ProductData> query(ProductQueryOptions options) {
 		ProductQueryOptions safeOptions = options == null ? ProductQueryOptions.none() : options;
 		return MyBatis3Utils.selectList(this::selectMany, selectList, products, c -> c
-				.where(id, isEqualToWhenPresent(safeOptions::getIdValue))
+				.where(deleted, isEqualTo(false))
+				.and(id, isEqualToWhenPresent(safeOptions::getIdValue))
 				.and(name, isEqualToWhenPresent(safeOptions::getNameValue))
 				.and(skuId, isEqualToWhenPresent(safeOptions::getSkuIdValue))
 				.and(enabled, isEqualToWhenPresent(safeOptions::getEnabledValue))

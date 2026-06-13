@@ -53,6 +53,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class InventoryApplicationService implements InventoryUseCase {
 
+	private static final Long SYSTEM_OPERATOR_ID = 0L;
+
 	private final MyBatisInventoryRepository repository;
 	private final InventoryReceiptService receiptService;
 
@@ -109,7 +111,7 @@ public class InventoryApplicationService implements InventoryUseCase {
 				TransactionType.OutSalesDelivery,
 				lockings,
 				orderId,
-				null,
+				SYSTEM_OPERATOR_ID,
 				"reserve order stock",
 				"reserve order stock",
 				List.of()
@@ -127,7 +129,7 @@ public class InventoryApplicationService implements InventoryUseCase {
 				TransactionType.OutSalesDelivery,
 				items,
 				orderId,
-				null,
+				SYSTEM_OPERATOR_ID,
 				"release order stock",
 				"release order stock",
 				true,
@@ -146,7 +148,7 @@ public class InventoryApplicationService implements InventoryUseCase {
 				TransactionType.OutSalesDelivery,
 				items,
 				orderId,
-				null,
+				SYSTEM_OPERATOR_ID,
 				"confirm order stock",
 				List.of()
 		));

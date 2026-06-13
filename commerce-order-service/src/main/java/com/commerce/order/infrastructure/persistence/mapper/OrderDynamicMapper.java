@@ -21,6 +21,7 @@ import static com.commerce.order.infrastructure.persistence.mapper.OrderDynamicS
 import static com.commerce.order.infrastructure.persistence.mapper.OrderDynamicSqlSupport.updateTime;
 import static com.commerce.order.infrastructure.persistence.mapper.OrderDynamicSqlSupport.userId;
 import static com.commerce.order.infrastructure.persistence.mapper.OrderDynamicSqlSupport.version;
+import static org.mybatis.dynamic.sql.SqlBuilder.isGreaterThanOrEqualTo;
 import static org.mybatis.dynamic.sql.SqlBuilder.isEqualToWhenPresent;
 import static org.mybatis.dynamic.sql.SqlBuilder.isLessThanWhenPresent;
 
@@ -148,7 +149,8 @@ public interface OrderDynamicMapper {
 	default List<OrderData> query(OrderQueryOptions options) {
 		OrderQueryOptions safeOptions = options == null ? OrderQueryOptions.none() : options;
 		return MyBatis3Utils.selectList(this::selectMany, selectList, orders, c -> c
-				.where(id, isEqualToWhenPresent(safeOptions::getOrderIdValue))
+				.where(id, isGreaterThanOrEqualTo(0L))
+				.and(id, isEqualToWhenPresent(safeOptions::getOrderIdValue))
 				.and(userId, isEqualToWhenPresent(safeOptions::getUserIdValue))
 				.and(status, isEqualToWhenPresent(safeOptions::getStatusValue))
 				.and(createTime, isLessThanWhenPresent(safeOptions::getCreateTimeBeforeValue))
