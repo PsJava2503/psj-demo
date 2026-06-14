@@ -31,6 +31,7 @@ A Spring Boot microservice demo for a commerce domain. The project includes user
 - Sa-Token
 - Maven Wrapper
 - Docker Compose
+- Kubernetes
 
 ## Local Requirements
 
@@ -38,31 +39,79 @@ Install or start the following before running the project:
 
 - JDK 17
 - Docker Desktop or Docker Engine
-- Docker Compose plugin
+- Docker Compose plugin for Docker Compose startup
+- Docker Desktop Kubernetes and `kubectl` for Kubernetes startup
 
 The repository uses Maven Wrapper, so a local Maven installation is not required.
 
 ## Quick Start
 
-Build all runnable jars first:
+The project supports two local startup modes:
+
+- Docker Compose: quick local development with `scripts/deploy`.
+- Kubernetes: local Docker Desktop Kubernetes deployment with `deploy/k8s` and `scripts/k8s`.
+
+Build all runnable jars first for either mode:
 
 ```bash
 ./mvnw -DskipTests package
 ```
 
-Start the full local `dev` environment:
+### Docker Compose Startup
+
+Start the full local `dev` environment with Docker Compose:
 
 ```bash
 bash scripts/deploy/up-all.sh dev
 ```
 
-Stop the full local `dev` environment:
+Stop the Docker Compose environment:
 
 ```bash
 bash scripts/deploy/down-all.sh dev
 ```
 
 The startup script launches infrastructure and all business services. It also creates per-service PostgreSQL containers through each module's Docker Compose file.
+
+### Kubernetes Startup
+
+The local Kubernetes deployment is intended for Docker Desktop Kubernetes on Windows. Enable Kubernetes in Docker Desktop first, then make sure `kubectl config current-context` points to `docker-desktop`.
+
+Build the local Docker images after packaging the jars:
+
+```powershell
+.\scripts\k8s\build-images.ps1
+```
+
+Start the local Kubernetes environment:
+
+```powershell
+.\scripts\k8s\up.ps1
+```
+
+The script applies `deploy/k8s` into the `commerce-dev` namespace and waits for Nacos, Redis, RabbitMQ, seven PostgreSQL instances, and all application deployments to become ready.
+
+Access the gateway through the NodePort service:
+
+```powershell
+curl http://localhost:30080/api/products
+```
+
+Inspect resources and logs:
+
+```powershell
+.\scripts\k8s\status.ps1
+kubectl logs -n commerce-dev deployment/commerce-gateway
+kubectl logs -n commerce-dev deployment/commerce-order-service
+```
+
+Stop and remove the local Kubernetes environment:
+
+```powershell
+.\scripts\k8s\down.ps1
+```
+
+This removes the `commerce-dev` namespace, including the local PostgreSQL persistent volume claims created by the deployment.
 
 ## Infrastructure
 
