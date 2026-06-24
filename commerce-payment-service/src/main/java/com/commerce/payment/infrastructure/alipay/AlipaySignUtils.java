@@ -50,7 +50,7 @@ public final class AlipaySignUtils {
 		for (Map.Entry<String, String> entry : entries) {
 			String key = entry.getKey();
 			String value = entry.getValue();
-			if (value == null || value.isBlank() || "sign".equals(key) || "sign_type".equals(key)) {
+			if (value == null || value.isBlank() || "sign".equals(key)) {
 				continue;
 			}
 			if (!builder.isEmpty()) {

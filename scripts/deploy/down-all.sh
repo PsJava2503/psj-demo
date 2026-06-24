@@ -19,6 +19,7 @@ down_compose() {
 }
 
 down_compose "commerce-gateway"
+down_compose "commerce-cart-service"
 down_compose "commerce-order-service"
 down_compose "commerce-address-service"
 down_compose "commerce-notification-service"

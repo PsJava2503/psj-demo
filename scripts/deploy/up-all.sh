@@ -180,6 +180,7 @@ compose_up "commerce-payment-service" $((8085 + APP_OFFSET)) "commerce_payment" 
 compose_up "commerce-notification-service" $((8086 + APP_OFFSET)) "commerce_notification" $((DB_BASE_PORT + 5))
 compose_up "commerce-address-service" $((8087 + APP_OFFSET)) "commerce_address" $((DB_BASE_PORT + 6))
 compose_up "commerce-order-service" $((8081 + APP_OFFSET)) "commerce_order" $((DB_BASE_PORT + 7))
+compose_up "commerce-cart-service" $((8088 + APP_OFFSET)) "commerce_cart" $((DB_BASE_PORT + 8))
 compose_up "commerce-gateway" $((8080 + APP_OFFSET))
 
 echo ">>> Done. Environment: ${ENV_NAME}"

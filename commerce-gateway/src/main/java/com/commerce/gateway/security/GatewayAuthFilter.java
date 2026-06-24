@@ -28,7 +28,8 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
 			"/api/products", CommercePermissions.PRODUCT_VIEW,
 			"/api/users", CommercePermissions.USER_VIEW,
 			"/api/notifications", CommercePermissions.NOTIFICATION_SEND,
-			"/api/addresses", CommercePermissions.ADDRESS_VIEW
+			"/api/addresses", CommercePermissions.ADDRESS_VIEW,
+			"/api/carts", CommercePermissions.CART_VIEW
 	);
 
 	@Override

@@ -19,6 +19,9 @@ target/
 *.iml
 *.ipr
 
+### Local deploy data ###
+**/deploy/.data/
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

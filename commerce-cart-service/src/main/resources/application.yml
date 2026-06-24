@@ -1,0 +1,21 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: commerce-cart-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/commerce_cart
+    username: postgres
+    password: postgres
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+
+mybatis:
+  type-handlers-package: com.commerce.mybatis

@@ -95,6 +95,9 @@ public class PaymentApplicationService implements PaymentUseCase {
 		if (existingOrder.isPresent() && existingOrder.get().status() == PaymentOrderStatus.WAIT_BUYER_PAY) {
 			return "WAIT_BUYER_PAY:" + existingOrder.get().outTradeNo();
 		}
+		if (existingOrder.isPresent() && existingOrder.get().status() == PaymentOrderStatus.TRADE_FAILED) {
+			return retryPreCreate(existingOrder.get(), amount, subject);
+		}
 		if (existingOrder.isPresent()) {
 			return existingOrder.get().status().name() + ":" + existingOrder.get().outTradeNo();
 		}
@@ -117,13 +120,27 @@ public class PaymentApplicationService implements PaymentUseCase {
 		AlipayGatewayResponse response = alipaySandboxClient.precreate(outTradeNo, amount, finalSubject);
 		if (!response.success()) {
 			updatePaymentOrder(outTradeNo, null, PaymentOrderStatus.TRADE_FAILED, response.rawBody());
-			return "PAY_FAILED:" + response.code();
+			return "PAY_FAILED:" + response.code() + ":" + response.message();
 		}
 
 		String tradeNo = stringValue(response.payload().get("trade_no"));
 		updatePaymentOrder(outTradeNo, tradeNo, PaymentOrderStatus.WAIT_BUYER_PAY, response.rawBody());
 		String qrCode = stringValue(response.payload().get("qr_code"));
 		return "WAIT_BUYER_PAY:" + outTradeNo + ":" + qrCode;
+	}
+
+	private String retryPreCreate(PaymentOrderEntity existingOrder, BigDecimal amount, String subject) {
+		String finalSubject = StringUtils.hasText(subject) ? subject : existingOrder.subject();
+		AlipayGatewayResponse response = alipaySandboxClient.precreate(existingOrder.outTradeNo(), amount, finalSubject);
+		if (!response.success()) {
+			updatePaymentOrder(existingOrder.outTradeNo(), null, PaymentOrderStatus.TRADE_FAILED, response.rawBody());
+			return "PAY_FAILED:" + response.code() + ":" + response.message();
+		}
+
+		String tradeNo = stringValue(response.payload().get("trade_no"));
+		updatePaymentOrder(existingOrder.outTradeNo(), tradeNo, PaymentOrderStatus.WAIT_BUYER_PAY, response.rawBody());
+		String qrCode = stringValue(response.payload().get("qr_code"));
+		return "WAIT_BUYER_PAY:" + existingOrder.outTradeNo() + ":" + qrCode;
 	}
 
 	@Override
@@ -220,7 +237,8 @@ public class PaymentApplicationService implements PaymentUseCase {
 				.orElseThrow(() -> new IllegalArgumentException("payment order not found"));
 		AlipayGatewayResponse response = alipaySandboxClient.query(order.outTradeNo());
 		if (!response.success()) {
-			return "QUERY_FAILED:" + response.code();
+			updatePaymentOrder(order.outTradeNo(), order.tradeNo(), order.status(), response.rawBody());
+			return "QUERY_FAILED:" + response.code() + ":" + response.message();
 		}
 		String tradeStatus = stringValue(response.payload().get("trade_status"));
 		PaymentOrderStatus status = paymentDomainService.mapTradeStatus(tradeStatus);

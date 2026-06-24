@@ -1,6 +1,6 @@
 # Commerce Demo
 
-A Spring Boot microservice demo for a commerce domain. The project includes user authentication, RBAC, product and address persistence, order creation, inventory reservation, payment, notification, fulfillment, and gateway services.
+A Spring Boot microservice demo for a commerce domain. The project includes user authentication, RBAC, product, address and cart persistence, order creation, inventory reservation, payment, notification, fulfillment, and gateway services.
 
 ## Modules
 
@@ -15,6 +15,7 @@ A Spring Boot microservice demo for a commerce domain. The project includes user
 | `commerce-payment-service` | Payment APIs. |
 | `commerce-notification-service` | Notification APIs, idempotent notification records, and message handling. |
 | `commerce-address-service` | Address CRUD APIs and default address support. |
+| `commerce-cart-service` | Shopping cart item persistence and cart management APIs. |
 
 ## Tech Stack
 
@@ -142,6 +143,7 @@ Default `dev` application ports:
 | Payment | `8085` |
 | Notification | `8086` |
 | Address | `8087` |
+| Cart | `8088` |
 
 Other environments use an offset:
 
@@ -235,6 +237,17 @@ DELETE /api/addresses/{addressId}
 GET    /api/addresses
 GET    /api/addresses/{addressId}
 GET    /api/addresses/{userId}/default
+```
+
+Cart APIs:
+
+```text
+POST   /api/carts/items
+PUT    /api/carts/items/{itemId}
+DELETE /api/carts/items/{itemId}?userId={userId}
+DELETE /api/carts?userId={userId}
+GET    /api/carts
+GET    /api/carts/items/{itemId}
 ```
 
 Create an order:

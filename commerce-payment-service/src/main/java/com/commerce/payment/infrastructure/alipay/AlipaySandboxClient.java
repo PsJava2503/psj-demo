@@ -3,6 +3,7 @@ package com.commerce.payment.infrastructure.alipay;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -17,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 @Component
@@ -37,7 +39,7 @@ public class AlipaySandboxClient {
 	public AlipayGatewayResponse precreate(String outTradeNo, BigDecimal amount, String subject) {
 		Map<String, Object> biz = new HashMap<>();
 		biz.put("out_trade_no", outTradeNo);
-		biz.put("total_amount", amount.toPlainString());
+		biz.put("total_amount", amount.setScale(2, RoundingMode.HALF_UP).toPlainString());
 		biz.put("subject", subject);
 		return call("alipay.trade.precreate", biz, true);
 	}
@@ -100,12 +102,28 @@ public class AlipaySandboxClient {
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-			HttpEntity<String> request = new HttpEntity<>(toFormBody(params), headers);
-			ResponseEntity<String> response = restTemplate.postForEntity(properties.getGatewayUrl(), request, String.class);
+			Map<String, String> bodyParams = new LinkedHashMap<>(params);
+			bodyParams.remove("charset");
+			HttpEntity<String> request = new HttpEntity<>(toFormBody(bodyParams), headers);
+			ResponseEntity<String> response = restTemplate.postForEntity(gatewayUrlWithCharset(), request, String.class);
 			return parseResponse(method, response.getBody());
+		} catch (RestClientResponseException ex) {
+			return AlipayGatewayResponse.failed(
+					"HTTP_" + ex.getStatusCode().value(),
+					"Alipay sandbox gateway returned " + ex.getStatusCode().value() + " " + ex.getStatusText(),
+					ex.getResponseBodyAsString()
+			);
 		} catch (Exception ex) {
 			return AlipayGatewayResponse.failed("CALL_FAILED", ex.getMessage(), "{}");
 		}
+	}
+
+	private String gatewayUrlWithCharset() {
+		String gatewayUrl = properties.getGatewayUrl();
+		if (gatewayUrl.contains("charset=")) {
+			return gatewayUrl;
+		}
+		return gatewayUrl + (gatewayUrl.contains("?") ? "&" : "?") + "charset=utf-8";
 	}
 
 	private AlipayGatewayResponse parseResponse(String method, String responseBody) {

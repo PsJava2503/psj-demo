@@ -42,6 +42,10 @@ spring:
           uri: lb://commerce-address-service
           predicates:
             - Path=/api/addresses/**
+        - id: commerce-cart-service
+          uri: lb://commerce-cart-service
+          predicates:
+            - Path=/api/carts/**
         - id: commerce-order-service-openapi
           uri: lb://commerce-order-service
           predicates:
@@ -84,6 +88,12 @@ spring:
             - Path=/v3/api-docs/address
           filters:
             - RewritePath=/v3/api-docs/address, /v3/api-docs
+        - id: commerce-cart-service-openapi
+          uri: lb://commerce-cart-service
+          predicates:
+            - Path=/v3/api-docs/cart
+          filters:
+            - RewritePath=/v3/api-docs/cart, /v3/api-docs
 
 springdoc:
   swagger-ui:
@@ -104,3 +114,5 @@ springdoc:
         url: /v3/api-docs/notification
       - name: Address
         url: /v3/api-docs/address
+      - name: Cart
+        url: /v3/api-docs/cart

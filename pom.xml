@@ -25,6 +25,7 @@
 		<module>commerce-inventory-service</module>
 		<module>commerce-notification-service</module>
 		<module>commerce-address-service</module>
+		<module>commerce-cart-service</module>
 	</modules>
 
 	<properties>
