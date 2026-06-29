@@ -3,6 +3,8 @@ package com.commerce.payment.interfaces.rest;
 import com.commerce.payment.application.port.PaymentUseCase;
 import com.commerce.payment.PreCreatePaymentRequest;
 import com.commerce.payment.RefundPaymentRequest;
+import com.commerce.payment.PaymentOrderSummaryResponse;
+import com.commerce.payment.application.service.PaymentSummaryQueryService;
 import java.math.BigDecimal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,9 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class InternalPaymentController {
 
 	private final PaymentUseCase paymentUseCase;
+	private final PaymentSummaryQueryService paymentSummaryQueryService;
 
-	public InternalPaymentController(PaymentUseCase paymentUseCase) {
+	public InternalPaymentController(PaymentUseCase paymentUseCase, PaymentSummaryQueryService paymentSummaryQueryService) {
 		this.paymentUseCase = paymentUseCase;
+		this.paymentSummaryQueryService = paymentSummaryQueryService;
 	}
 
 	@PostMapping("/pay")
@@ -43,6 +47,11 @@ public class InternalPaymentController {
 	@GetMapping("/query")
 	public String query(@RequestParam Long orderId) {
 		return paymentUseCase.query(orderId);
+	}
+
+	@GetMapping("/summary")
+	public PaymentOrderSummaryResponse summary(@RequestParam Long orderId) {
+		return paymentSummaryQueryService.summary(orderId);
 	}
 
 	@PostMapping("/close")

@@ -2,6 +2,7 @@ package com.commerce.order.application.port;
 
 import com.commerce.payment.PreCreatePaymentRequest;
 import com.commerce.payment.RefundPaymentRequest;
+import com.commerce.payment.PaymentOrderSummaryResponse;
 import java.math.BigDecimal;
 
 public interface PaymentCommandPort {
@@ -15,5 +16,7 @@ public interface PaymentCommandPort {
 	String refundDetailed(RefundPaymentRequest request);
 
 	String close(Long orderId);
+
+	PaymentOrderSummaryResponse summary(Long orderId);
 
 }

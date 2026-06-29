@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: commerce-order-service
+  graphql:
+    path: /api/orders/graphql
   rabbitmq:
     host: localhost
     port: 5672

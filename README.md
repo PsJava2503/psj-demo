@@ -2,7 +2,7 @@
 
 `psj-demo` is a Spring Boot microservice demo for a commerce domain. It covers authentication, RBAC, product and address data, cart data, multi-item checkout orders, inventory reservation, Alipay sandbox payment, payment allocation, refund allocation, reconciliation, notification records, fulfillment APIs, and a Gateway entry point.
 
-The current implementation does not include Elasticsearch or GraphQL. PostgreSQL remains the source of truth for business data.
+The current implementation does not include Elasticsearch. GraphQL is embedded in `commerce-order-service` for order-centered aggregation queries, and PostgreSQL remains the source of truth for business data.
 
 ## Modules
 
@@ -24,6 +24,7 @@ The current implementation does not include Elasticsearch or GraphQL. PostgreSQL
 - Java 17
 - Spring Boot 3.2
 - Spring Cloud Gateway
+- Spring GraphQL
 - Spring Cloud OpenFeign
 - Spring Cloud Alibaba Nacos service discovery
 - PostgreSQL
@@ -815,7 +816,10 @@ POST   /api/orders/{orderId}/refund
 POST   /api/orders/{orderId}/ship
 POST   /api/orders/{orderId}/receive
 POST   /api/orders/{orderId}/complete
+POST   /api/orders/graphql
 ```
+
+`/api/orders/graphql` is served by `commerce-order-service` through Spring GraphQL. It does not require a separate GraphQL server or infrastructure component; the existing order-service Docker Compose and Kubernetes startup scripts already deploy it with the order service. Because the path is under `/api/orders/**`, it goes through the same Gateway authentication and `order:create` permission check as other order APIs.
 
 Create a multi-item order:
 
@@ -843,6 +847,18 @@ curl -X POST http://localhost:8080/api/orders/10001/refund \
     "subOrderId": 20001,
     "amount": 20.00,
     "reason": "customer_refund"
+  }'
+```
+
+Query products under an order together with their payment allocation:
+
+```bash
+curl -X POST http://localhost:8080/api/orders/graphql \
+  -H 'Content-Type: application/json' \
+  -H 'satoken: <token>' \
+  -d '{
+    "query": "query($orderId: ID!) { orderProductsPayment(orderId: $orderId) { orderId payment { checkoutOrderId outTradeNo tradeNo amount status } products { subOrderId productId skuId productName unitPrice quantity amount status refundStatus payment { paidAmount settleAmount goodsAmount shippingAmount platformDiscountAmount merchantDiscountAmount } } } }",
+    "variables": { "orderId": "10001" }
   }'
 ```
 

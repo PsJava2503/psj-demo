@@ -1,0 +1,41 @@
+type Query {
+  orderProductsPayment(orderId: ID!): OrderProductsPayment!
+}
+
+type OrderProductsPayment {
+  orderId: ID!
+  payment: OrderPaymentSummary
+  products: [OrderProductPayment!]!
+}
+
+type OrderPaymentSummary {
+  checkoutOrderId: ID
+  outTradeNo: String
+  tradeNo: String
+  amount: String
+  status: String
+}
+
+type OrderProductPayment {
+  subOrderId: ID!
+  productId: ID!
+  skuId: ID
+  productName: String!
+  unitPrice: String!
+  quantity: Int!
+  amount: String!
+  status: String!
+  refundStatus: String!
+  payment: ProductPaymentAllocation
+}
+
+type ProductPaymentAllocation {
+  subOrderId: ID
+  merchantId: ID
+  goodsAmount: String
+  shippingAmount: String
+  platformDiscountAmount: String
+  merchantDiscountAmount: String
+  paidAmount: String
+  settleAmount: String
+}
