@@ -5,17 +5,23 @@ import com.commerce.messaging.PaymentPaidEvent;
 import com.commerce.order.domain.model.Order;
 import com.commerce.order.domain.model.OrderInventoryReservation;
 import com.commerce.order.domain.model.OrderInventoryReservationQueryOptions;
+import com.commerce.order.domain.model.OrderRefundRequest;
 import com.commerce.order.domain.model.OrderOutboxEventQueryOptions;
 import com.commerce.order.domain.model.OrderQueryOptions;
 import com.commerce.order.domain.model.OrderStatus;
 import com.commerce.order.domain.model.OrderStatusLog;
+import com.commerce.order.domain.model.OrderSubOrder;
 import com.commerce.order.domain.repository.OrderRepository;
 import com.commerce.order.infrastructure.persistence.OrderInventoryReservationRepository;
 import com.commerce.order.infrastructure.persistence.OrderOutboxEventRepository;
+import com.commerce.order.infrastructure.persistence.OrderRefundRequestRepository;
 import com.commerce.order.infrastructure.persistence.OrderStatusLogRepository;
+import com.commerce.order.infrastructure.persistence.OrderSubOrderRepository;
 import com.commerce.order.infrastructure.persistence.model.OrderOutboxEventData;
+import com.commerce.payment.RefundAllocationRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +38,8 @@ public class PaymentPaidListener {
 	private final OrderRepository orderRepository;
 	private final OrderInventoryReservationRepository reservationRepository;
 	private final OrderOutboxEventRepository orderOutboxEventRepository;
+	private final OrderSubOrderRepository orderSubOrderRepository;
+	private final OrderRefundRequestRepository orderRefundRequestRepository;
 	private final OrderStatusLogRepository orderStatusLogRepository;
 	private final ObjectMapper objectMapper;
 
@@ -39,12 +47,16 @@ public class PaymentPaidListener {
 			OrderRepository orderRepository,
 			OrderInventoryReservationRepository reservationRepository,
 			OrderOutboxEventRepository orderOutboxEventRepository,
+			OrderSubOrderRepository orderSubOrderRepository,
+			OrderRefundRequestRepository orderRefundRequestRepository,
 			OrderStatusLogRepository orderStatusLogRepository,
 			ObjectMapper objectMapper
 	) {
 		this.orderRepository = orderRepository;
 		this.reservationRepository = reservationRepository;
 		this.orderOutboxEventRepository = orderOutboxEventRepository;
+		this.orderSubOrderRepository = orderSubOrderRepository;
+		this.orderRefundRequestRepository = orderRefundRequestRepository;
 		this.orderStatusLogRepository = orderStatusLogRepository;
 		this.objectMapper = objectMapper;
 	}
@@ -73,8 +85,15 @@ public class PaymentPaidListener {
 			));
 			if (updated == 1) {
 				logStatus(paidOrder.orderId(), fromStatus, paidOrder.status(), "paid after order closed");
+				OrderRefundRequest refundRequest = ensureRefundRequest(paidOrder, null, paidOrder.amount(), "paid_after_order_closed");
 				createOutbox("refund-requested:" + paidOrder.orderId(), "REFUND_REQUESTED", paidOrder.orderId(),
-						Map.of("orderId", paidOrder.orderId(), "amount", paidOrder.amount(), "reason", "paid_after_order_closed"));
+						Map.of(
+								"orderId", paidOrder.orderId(),
+								"refundRequestNo", refundRequest.refundRequestNo(),
+								"amount", paidOrder.amount(),
+								"reason", "paid_after_order_closed",
+								"allocations", refundAllocations(paidOrder.orderId())
+						));
 			}
 			return;
 		}
@@ -101,6 +120,7 @@ public class PaymentPaidListener {
 			return;
 		}
 		logStatus(paidOrder.orderId(), fromStatus, paidOrder.status(), "payment paid");
+		orderSubOrderRepository.updateStatusForCheckoutOrder(paidOrder.orderId(), "PAID");
 		createOutbox("order-paid:" + paidOrder.orderId(), "ORDER_PAID", paidOrder.orderId(),
 				Map.of("orderId", paidOrder.orderId()));
 		createOutbox("inventory-confirm:" + paidOrder.orderId(), "INVENTORY_CONFIRM_REQUESTED", paidOrder.orderId(),
@@ -118,6 +138,53 @@ public class PaymentPaidListener {
 				Optional.of("RESERVED")
 		)).stream()
 				.map(OrderInventoryReservation::reservationId)
+				.toList();
+	}
+
+	private OrderRefundRequest ensureRefundRequest(Order order, Long subOrderId, BigDecimal amount, String reason) {
+		String refundRequestNo = "AUTO-" + order.orderId() + (subOrderId == null ? "" : "-" + subOrderId);
+		return orderRefundRequestRepository.findByRefundRequestNo(refundRequestNo)
+				.orElseGet(() -> orderRefundRequestRepository.create(new OrderRefundRequest(
+						null,
+						refundRequestNo,
+						order.orderId(),
+						subOrderId,
+						amount,
+						reason,
+						"REQUESTED",
+						null,
+						null,
+						null
+				)));
+	}
+
+	private List<RefundAllocationRequest> refundAllocations(Long orderId) {
+		List<OrderSubOrder> subOrders = orderSubOrderRepository.findByCheckoutOrderId(orderId);
+		if (subOrders.isEmpty()) {
+			Optional<Order> order = orderRepository.query(new OrderQueryOptions(
+					Optional.ofNullable(orderId),
+					Optional.empty(),
+					Optional.empty(),
+					Optional.empty()
+			)).stream().findFirst();
+			return order.map(value -> List.of(new RefundAllocationRequest(
+					orderId,
+					value.amount(),
+					BigDecimal.ZERO,
+					BigDecimal.ZERO,
+					BigDecimal.ZERO,
+					value.amount()
+			))).orElseGet(List::of);
+		}
+		return subOrders.stream()
+				.map(subOrder -> new RefundAllocationRequest(
+						subOrder.id(),
+						subOrder.amount(),
+						BigDecimal.ZERO,
+						BigDecimal.ZERO,
+						BigDecimal.ZERO,
+						subOrder.amount()
+				))
 				.toList();
 	}
 

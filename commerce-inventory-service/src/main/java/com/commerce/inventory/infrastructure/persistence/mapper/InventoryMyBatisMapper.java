@@ -495,6 +495,29 @@ public interface InventoryMyBatisMapper {
 			""")
 	int cancelReservations(@Param("ids") List<Long> ids);
 
+	@Update("""
+			<script>
+			UPDATE inv_reservations
+			SET bound_order = TRUE, available_to = NULL, update_time = NOW()
+			WHERE id IN
+			<foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+			</script>
+			""")
+	int bindReservations(@Param("ids") List<Long> ids);
+
+	@Select("""
+			SELECT id
+			FROM inv_reservations
+			WHERE bound_order = FALSE
+			  AND available_to IS NOT NULL
+			  AND available_to <= NOW()
+			  AND remaining > 0
+			  AND cancelled_time IS NULL
+			ORDER BY id
+			LIMIT #{limit}
+			""")
+	List<Long> queryExpiredUnboundReservationIds(@Param("limit") int limit);
+
 	@Insert("""
 			INSERT INTO inv_sequence_numbers (number_type, date_key, current_sequence)
 			VALUES (#{numberType}, #{dateKey}, 0)

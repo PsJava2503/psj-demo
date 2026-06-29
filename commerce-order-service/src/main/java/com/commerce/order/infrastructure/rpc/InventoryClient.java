@@ -19,6 +19,10 @@ public interface InventoryClient extends InventoryCommandPort {
 	);
 
 	@Override
+	@PostMapping("/internal/inventory/reservations/bind")
+	void bindReservations(@RequestBody List<Long> reservationIds, @RequestParam("orderId") Long orderId);
+
+	@Override
 	@PostMapping("/internal/inventory/release")
 	void releaseStock(@RequestBody List<Long> reservationIds, @RequestParam("orderId") Long orderId);
 

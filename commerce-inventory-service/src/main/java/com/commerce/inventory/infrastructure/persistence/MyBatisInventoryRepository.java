@@ -288,6 +288,16 @@ public class MyBatisInventoryRepository {
 		}
 	}
 
+	public void bindReservations(List<Long> reservationIds) {
+		if (reservationIds != null && !reservationIds.isEmpty()) {
+			mapper.bindReservations(reservationIds);
+		}
+	}
+
+	public List<Long> queryExpiredUnboundReservationIds(int limit) {
+		return mapper.queryExpiredUnboundReservationIds(limit);
+	}
+
 	public String nextReceiptNumber(NumberType numberType) {
 		LocalDate today = LocalDate.now();
 		String dateKey = today.format(DateTimeFormatter.BASIC_ISO_DATE);

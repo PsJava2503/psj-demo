@@ -35,7 +35,10 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 		String path = exchange.getRequest().getPath().value();
-		if (!path.startsWith("/api/") || path.equals("/api/auth/login") || path.equals("/api/auth/register")) {
+		if (!path.startsWith("/api/")
+				|| path.equals("/api/auth/login")
+				|| path.equals("/api/auth/register")
+				|| path.equals("/api/payments/notify")) {
 			return chain.filter(exchange);
 		}
 

@@ -90,6 +90,8 @@ public class OrderTimeoutCancellationService {
 		createGenericOutbox("notification-order-cancelled:" + order.orderId(), "NOTIFICATION_REQUESTED", order.orderId(),
 				Map.of("orderId", order.orderId(), "templateCode", "ORDER_CANCELLED"));
 		createOutbox("inventory-release-timeout:" + order.orderId(), order.orderId(), reservationIds);
+		createGenericOutbox("payment-close-timeout:" + order.orderId(), "PAYMENT_CLOSE_REQUESTED", order.orderId(),
+				Map.of("orderId", order.orderId(), "reason", "payment timeout"));
 	}
 
 	private void createOutbox(String eventKey, Long orderId, List<Long> reservationIds) {

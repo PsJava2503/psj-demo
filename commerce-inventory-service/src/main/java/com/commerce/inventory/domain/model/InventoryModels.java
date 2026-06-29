@@ -367,8 +367,21 @@ public final class InventoryModels {
 			Long operatorId,
 			String remark,
 			String ledgerRemark,
-			List<Long> linkedOrderIds
-	) {}
+			List<Long> linkedOrderIds,
+			ZonedDateTime availableTo
+	) {
+		public LockRequest(
+				TransactionType transactionType,
+				List<Locking> items,
+				Long sourceOrderId,
+				Long operatorId,
+				String remark,
+				String ledgerRemark,
+				List<Long> linkedOrderIds
+		) {
+			this(transactionType, items, sourceOrderId, operatorId, remark, ledgerRemark, linkedOrderIds, null);
+		}
+	}
 
 	public record UnlockRequest(
 			TransactionType transactionType,

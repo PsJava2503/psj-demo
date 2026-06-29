@@ -32,6 +32,11 @@ public class InternalInventoryController {
 		return inventoryUseCase.reserveStock(skuId, quantity, orderId);
 	}
 
+	@PostMapping("/reservations/bind")
+	public void bind(@RequestBody List<Long> reservationIds, @RequestParam Long orderId) {
+		inventoryUseCase.bindReservations(reservationIds, orderId);
+	}
+
 	@PostMapping("/release")
 	public void release(@RequestBody List<Long> reservationIds, @RequestParam Long orderId) {
 		inventoryUseCase.releaseStock(reservationIds, orderId);

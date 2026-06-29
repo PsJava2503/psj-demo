@@ -30,6 +30,15 @@ public class PaymentDomainService {
 		return "R" + orderId + TRADE_NO_TIME.format(LocalDateTime.now());
 	}
 
+	public String generateOutRefundNo(String refundRequestId) {
+		if (StringUtils.hasText(refundRequestId)) {
+			String normalized = refundRequestId.replaceAll("[^A-Za-z0-9]", "");
+			String value = "R" + normalized;
+			return value.length() <= 64 ? value : value.substring(0, 64);
+		}
+		return "R" + TRADE_NO_TIME.format(LocalDateTime.now());
+	}
+
 	public PaymentOrderStatus mapTradeStatus(String tradeStatus) {
 		if (!StringUtils.hasText(tradeStatus)) {
 			return PaymentOrderStatus.WAIT_BUYER_PAY;

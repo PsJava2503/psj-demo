@@ -31,7 +31,12 @@ public class OrderController {
 
 	@PostMapping
 	public String create(@RequestBody CreateOrderRequest request) {
-		return orderUseCase.create(new CreateOrderCommand(request.userId(), request.productId(), request.addressId(), request.quantity()));
+		List<CreateOrderCommand.Item> items = request.items() == null
+				? List.of(new CreateOrderCommand.Item(request.productId(), request.quantity()))
+				: request.items().stream()
+						.map(item -> new CreateOrderCommand.Item(item.productId(), item.quantity()))
+						.toList();
+		return orderUseCase.create(new CreateOrderCommand(request.userId(), request.productId(), request.addressId(), request.quantity(), items));
 	}
 
 	@GetMapping
@@ -58,6 +63,11 @@ public class OrderController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void cancel(@PathVariable Long orderId) {
 		orderUseCase.cancel(orderId);
+	}
+
+	@PostMapping("/{orderId}/refund")
+	public String refund(@PathVariable Long orderId, @RequestBody CreateRefundRequest request) {
+		return orderUseCase.refund(orderId, request.subOrderId(), request.amount(), request.reason());
 	}
 
 	@PostMapping("/{orderId}/ship")

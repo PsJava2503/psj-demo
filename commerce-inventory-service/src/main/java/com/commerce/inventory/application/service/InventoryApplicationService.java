@@ -47,6 +47,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,10 +59,16 @@ public class InventoryApplicationService implements InventoryUseCase {
 
 	private final MyBatisInventoryRepository repository;
 	private final InventoryReceiptService receiptService;
+	private final int orphanTtlSeconds;
 
-	public InventoryApplicationService(MyBatisInventoryRepository repository, InventoryReceiptService receiptService) {
+	public InventoryApplicationService(
+			MyBatisInventoryRepository repository,
+			InventoryReceiptService receiptService,
+			@Value("${inventory.reservation-orphan-ttl-seconds:60}") int orphanTtlSeconds
+	) {
 		this.repository = repository;
 		this.receiptService = receiptService;
+		this.orphanTtlSeconds = orphanTtlSeconds;
 	}
 
 	@Override
@@ -114,8 +122,39 @@ public class InventoryApplicationService implements InventoryUseCase {
 				SYSTEM_OPERATOR_ID,
 				"reserve order stock",
 				"reserve order stock",
-				List.of()
+				List.of(),
+				ZonedDateTime.now().plusSeconds(orphanTtlSeconds)
 		));
+	}
+
+	@Override
+	@Transactional
+	public void bindReservations(List<Long> reservationIds, Long orderId) {
+		List<Reservation> reservations = safeList(reservationIds).stream()
+				.map(reservationId -> repository.queryReservations(ReservationQueryOptions.byId(reservationId)).stream()
+						.findFirst()
+						.orElse(null))
+				.filter(Objects::nonNull)
+				.toList();
+		if (reservations.isEmpty()) {
+			return;
+		}
+		boolean invalid = reservations.stream()
+				.anyMatch(reservation -> reservation.cancelledTime() != null || reservation.remaining() <= 0);
+		if (invalid) {
+			throw InventoryException.versionConflict(orderId);
+		}
+		repository.bindReservations(reservations.stream().map(Reservation::id).toList());
+	}
+
+	@Override
+	@Scheduled(fixedDelayString = "${inventory.reservation-expire-delay-ms:10000}")
+	@Transactional
+	public void expireUnboundReservations() {
+		List<Long> reservationIds = repository.queryExpiredUnboundReservationIds(200);
+		if (!reservationIds.isEmpty()) {
+			releaseStock(reservationIds, 0L);
+		}
 	}
 
 	@Override
@@ -343,7 +382,7 @@ public class InventoryApplicationService implements InventoryUseCase {
 				request.operatorId(), request.remark(), request.linkedOrderIds(), state);
 		List<ReservationCreate> reservations = items.stream()
 				.map(item -> new ReservationCreate(item.skuId(), item.warehouseId(), item.binId(), null, transactionId,
-						item.quantity(), null, null, request.remark()))
+						item.quantity(), null, request.availableTo(), request.remark()))
 				.toList();
 		List<Long> ids = repository.createReservations(reservations);
 		Map<BinBalanceKey, Long> reservationByKey = new HashMap<>();

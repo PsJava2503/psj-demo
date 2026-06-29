@@ -11,6 +11,8 @@ public interface OrderUseCase {
 
 	int cancel(Long orderId);
 
+	String refund(Long orderId, Long subOrderId, java.math.BigDecimal amount, String reason);
+
 	int ship(Long orderId);
 
 	int receive(Long orderId);

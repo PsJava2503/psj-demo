@@ -15,8 +15,12 @@ import com.commerce.order.domain.repository.OrderRepository;
 import com.commerce.order.infrastructure.mq.OrderEventPublisher;
 import com.commerce.order.infrastructure.persistence.OrderInventoryReservationRepository;
 import com.commerce.order.infrastructure.persistence.OrderOutboxEventRepository;
+import com.commerce.order.infrastructure.persistence.OrderRefundRequestRepository;
 import com.commerce.order.infrastructure.persistence.OrderStatusLogRepository;
+import com.commerce.order.infrastructure.persistence.OrderSubOrderRepository;
 import com.commerce.order.infrastructure.persistence.model.OrderOutboxEventData;
+import com.commerce.payment.RefundAllocationRequest;
+import com.commerce.payment.RefundPaymentRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
@@ -39,6 +43,7 @@ public class OrderOutboxRelay {
 	private static final String INVENTORY_RELEASE_REQUESTED = "INVENTORY_RELEASE_REQUESTED";
 	private static final String NOTIFICATION_REQUESTED = "NOTIFICATION_REQUESTED";
 	private static final String REFUND_REQUESTED = "REFUND_REQUESTED";
+	private static final String PAYMENT_CLOSE_REQUESTED = "PAYMENT_CLOSE_REQUESTED";
 
 	private final OrderOutboxEventRepository orderOutboxEventRepository;
 	private final OrderEventPublisher orderEventPublisher;
@@ -47,6 +52,8 @@ public class OrderOutboxRelay {
 	private final PaymentCommandPort paymentCommandPort;
 	private final OrderRepository orderRepository;
 	private final OrderInventoryReservationRepository reservationRepository;
+	private final OrderRefundRequestRepository orderRefundRequestRepository;
+	private final OrderSubOrderRepository orderSubOrderRepository;
 	private final OrderStatusLogRepository orderStatusLogRepository;
 	private final ObjectMapper objectMapper;
 
@@ -58,6 +65,8 @@ public class OrderOutboxRelay {
 			PaymentCommandPort paymentCommandPort,
 			OrderRepository orderRepository,
 			OrderInventoryReservationRepository reservationRepository,
+			OrderRefundRequestRepository orderRefundRequestRepository,
+			OrderSubOrderRepository orderSubOrderRepository,
 			OrderStatusLogRepository orderStatusLogRepository,
 			ObjectMapper objectMapper
 	) {
@@ -68,6 +77,8 @@ public class OrderOutboxRelay {
 		this.paymentCommandPort = paymentCommandPort;
 		this.orderRepository = orderRepository;
 		this.reservationRepository = reservationRepository;
+		this.orderRefundRequestRepository = orderRefundRequestRepository;
+		this.orderSubOrderRepository = orderSubOrderRepository;
 		this.orderStatusLogRepository = orderStatusLogRepository;
 		this.objectMapper = objectMapper;
 	}
@@ -121,6 +132,11 @@ public class OrderOutboxRelay {
 			}
 			if (REFUND_REQUESTED.equals(event.eventType())) {
 				refundPayment(event);
+				markPublished(event);
+				return;
+			}
+			if (PAYMENT_CLOSE_REQUESTED.equals(event.eventType())) {
+				closePayment(event);
 				markPublished(event);
 				return;
 			}
@@ -238,9 +254,32 @@ public class OrderOutboxRelay {
 		Long orderId = payload.get("orderId").asLong();
 		BigDecimal amount = new BigDecimal(payload.get("amount").asText());
 		String reason = payload.path("reason").asText("paid_after_order_closed");
-		String result = paymentCommandPort.refund(orderId, amount, reason);
+		String result;
+		if (payload.hasNonNull("refundRequestNo")) {
+			result = paymentCommandPort.refundDetailed(new RefundPaymentRequest(
+					orderId,
+					payload.get("refundRequestNo").asText(),
+					amount,
+					reason,
+					refundAllocations(payload)
+			));
+		}
+		else {
+			result = paymentCommandPort.refund(orderId, amount, reason);
+		}
 		if (!result.startsWith("REFUND_SUCCESS")) {
 			throw new IllegalStateException("refund failed: " + result);
+		}
+		if (payload.hasNonNull("refundRequestNo")) {
+			orderRefundRequestRepository.updateStatus(payload.get("refundRequestNo").asText(), "REFUNDED", result);
+		}
+		JsonNode allocations = payload.get("allocations");
+		if (allocations != null && allocations.isArray()) {
+			allocations.forEach(allocation -> {
+				if (allocation.hasNonNull("subOrderId")) {
+					orderSubOrderRepository.updateRefundStatus(allocation.get("subOrderId").asLong(), "REFUNDED");
+				}
+			});
 		}
 		Optional<Order> order = orderRepository.query(byOrderId(orderId)).stream().findFirst();
 		if (order.isPresent() && order.get().status() == OrderStatus.REFUND_REQUIRED) {
@@ -251,6 +290,30 @@ public class OrderOutboxRelay {
 				logStatus(orderId, fromStatus, refundedOrder.status(), "refund success");
 			}
 		}
+	}
+
+	private void closePayment(OrderOutboxEventData event) throws Exception {
+		JsonNode payload = objectMapper.readTree(event.payload());
+		String result = paymentCommandPort.close(payload.get("orderId").asLong());
+		if (!result.startsWith("TRADE_CLOSED") && !result.startsWith("CLOSE_SKIPPED")) {
+			throw new IllegalStateException("payment close failed: " + result);
+		}
+	}
+
+	private List<RefundAllocationRequest> refundAllocations(JsonNode payload) {
+		List<RefundAllocationRequest> allocations = new ArrayList<>();
+		JsonNode node = payload.get("allocations");
+		if (node != null && node.isArray()) {
+			node.forEach(value -> allocations.add(new RefundAllocationRequest(
+					value.path("subOrderId").isMissingNode() || value.path("subOrderId").isNull() ? null : value.path("subOrderId").asLong(),
+					new BigDecimal(value.path("refundGoodsAmount").asText("0")),
+					new BigDecimal(value.path("refundShippingAmount").asText("0")),
+					new BigDecimal(value.path("refundPlatformDiscountAmount").asText("0")),
+					new BigDecimal(value.path("refundMerchantDiscountAmount").asText("0")),
+					new BigDecimal(value.path("refundPaidAmount").asText("0"))
+			)));
+		}
+		return allocations;
 	}
 
 	private List<Long> reservationIds(JsonNode payload) {

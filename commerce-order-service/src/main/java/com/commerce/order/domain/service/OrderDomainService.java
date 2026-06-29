@@ -52,4 +52,36 @@ public class OrderDomainService {
 		);
 	}
 
+	public Order createCheckout(Long userId, ProductResponse primaryProduct, AddressResponse address, Integer totalQuantity, BigDecimal totalAmount) {
+		if (userId == null || primaryProduct == null || primaryProduct.id() == null || totalQuantity == null || totalQuantity <= 0) {
+			throw new IllegalArgumentException("invalid order request");
+		}
+		if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("invalid order amount");
+		}
+		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+		return new Order(
+				orderIdGenerator.nextId(),
+				orderIdGenerator.nextOrderNo(),
+				userId,
+				primaryProduct.id(),
+				primaryProduct.skuId(),
+				primaryProduct.name(),
+				primaryProduct.price(),
+				totalQuantity,
+				totalAmount,
+				address == null ? null : address.id(),
+				address == null ? null : address.recipientName(),
+				address == null ? null : address.phone(),
+				address == null ? null : address.province(),
+				address == null ? null : address.city(),
+				address == null ? null : address.district(),
+				address == null ? null : address.detail(),
+				0L,
+				OrderStatus.CREATED,
+				now,
+				now
+		);
+	}
+
 }
