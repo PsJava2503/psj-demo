@@ -14,6 +14,7 @@ public final class CommercePermissions {
 	public static final String NOTIFICATION_SEND = "notification:send";
 	public static final String ADDRESS_VIEW = "address:view";
 	public static final String CART_VIEW = "cart:view";
+	public static final String AGENT_USE = "agent:use";
 
 	private CommercePermissions() {
 	}

@@ -1,0 +1,73 @@
+server:
+  port: 8089
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: commerce-agent-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+  ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY:mock-api-key}
+      agent:
+        api-key: ${DASHSCOPE_API_KEY:mock-api-key}
+      chat:
+        options:
+          timeout: 180000
+      retry:
+        max-attempts: 3
+        backoff:
+          initial-interval: 2s
+          multiplier: 2
+          max-interval: 10s
+
+agent:
+  mock-enabled: ${AGENT_MOCK_ENABLED:true}
+  session:
+    max-pairs: 6
+  chat:
+    model: ${AGENT_CHAT_MODEL:qwen-plus}
+    temperature: 0.7
+    max-token: 2000
+    top-p: 0.9
+  workflow:
+    model: ${AGENT_WORKFLOW_MODEL:qwen-plus}
+    temperature: 0.3
+    max-token: 8000
+    top-p: 0.9
+  rag:
+    enabled: ${AGENT_RAG_ENABLED:true}
+    use-milvus: ${AGENT_RAG_USE_MILVUS:false}
+    top-k: 3
+    upload-path: ${AGENT_UPLOAD_PATH:./uploads/agent}
+    allowed-extensions: txt,md
+    embedding-model: ${AGENT_EMBEDDING_MODEL:text-embedding-v4}
+    chunk:
+      max-size: 800
+      overlap: 100
+
+milvus:
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
+  username: ${MILVUS_USERNAME:}
+  password: ${MILVUS_PASSWORD:}
+  database: ${MILVUS_DATABASE:default}
+  collection: ${MILVUS_COLLECTION:commerce_agent_knowledge}
+  dimension: ${MILVUS_DIMENSION:1024}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

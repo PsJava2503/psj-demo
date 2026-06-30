@@ -18,6 +18,7 @@ The current implementation does not include Elasticsearch. GraphQL is embedded i
 | `commerce-notification-service` | Notification records and simulated LOG-channel notifications. |
 | `commerce-address-service` | Address CRUD and default-address support. |
 | `commerce-cart-service` | Shopping cart item persistence and cart management APIs. |
+| `commerce-agent-service` | AI Agent chat, SSE streaming, knowledge upload/RAG, and multi-agent business analysis over commerce read tools. |
 
 ## Tech Stack
 
@@ -33,6 +34,7 @@ The current implementation does not include Elasticsearch. GraphQL is embedded i
 - Flyway
 - MyBatis Dynamic SQL
 - Sa-Token
+- Spring AI Alibaba / DashScope
 - Maven Wrapper
 - Docker Compose
 - Kubernetes manifests for local Docker Desktop Kubernetes
@@ -52,6 +54,7 @@ flowchart TD
     gateway --> notificationService[NotificationService]
     gateway --> addressService[AddressService]
     gateway --> cartService[CartService]
+    gateway --> agentService[AgentService]
 
     orderService --> productService
     orderService --> addressService
@@ -65,6 +68,9 @@ flowchart TD
     orderService --> rabbitmq
     rabbitmq --> orderService
     rabbitmq --> notificationService
+    agentService --> productService
+    agentService --> orderService
+    agentService --> cartService
 ```
 
 Important boundaries:
@@ -1027,8 +1033,44 @@ Default `dev` ports:
 | Redis | `6379` |
 | RabbitMQ | `5672` |
 | RabbitMQ Management | `15672` |
+| Milvus (optional) | `19530` |
+| Milvus Attu UI (optional) | `8000` |
 
 The `up-all.sh` script also starts module-level databases. In `dev`, database ports start from `15431`.
+
+Milvus is optional. The Agent service uses an in-memory knowledge index by default. Use one of these startup modes:
+
+Default in-memory knowledge index, without Milvus:
+
+```bash
+bash scripts/deploy/up-all.sh dev
+```
+
+Start Milvus for inspection or manual testing, but keep the Agent on the in-memory knowledge index:
+
+```bash
+ENV_NAME=dev \
+NETWORK_NAME=commerce-dev-net \
+docker compose -f deploy/infra/milvus-compose.yml up -d
+
+bash scripts/deploy/up-all.sh dev
+```
+
+Enable Milvus-backed persistent RAG for the Agent. The startup script will start the optional Milvus stack automatically:
+
+```bash
+AGENT_RAG_USE_MILVUS=true \
+DASHSCOPE_API_KEY=<your-dashscope-key> \
+bash scripts/deploy/up-all.sh dev
+```
+
+Open Attu at `http://localhost:8000` and connect to `milvus:19530` from inside Docker, or `localhost:19530` from the host.
+
+The stop script also removes the optional Milvus stack:
+
+```bash
+bash scripts/deploy/down-all.sh dev
+```
 
 ## Service Ports
 
@@ -1045,6 +1087,7 @@ Default `dev` application ports:
 | Notification | `8086` |
 | Address | `8087` |
 | Cart | `8088` |
+| Agent | `8089` |
 
 Other environments use an offset:
 
@@ -1066,6 +1109,48 @@ For local non-Docker runs, services expect default local dependency addresses:
 - PostgreSQL: `localhost:5432`
 - Redis: `localhost:6379`
 - Nacos: `localhost:8848`
+
+## AI Agent Usage
+
+`commerce-agent-service` is exposed through the gateway under `/api/agents/**`. It starts in mock mode by default so the service can be verified without an external model key.
+
+Useful environment variables:
+
+```text
+DASHSCOPE_API_KEY
+AGENT_MOCK_ENABLED=false
+AGENT_RAG_USE_MILVUS=false
+AGENT_UPLOAD_PATH=./uploads/agent
+MILVUS_HOST=milvus
+MILVUS_PORT=19530
+```
+
+For Docker Compose, enable persistent Milvus-backed RAG with:
+
+```bash
+AGENT_RAG_USE_MILVUS=true \
+DASHSCOPE_API_KEY=<your-dashscope-key> \
+bash scripts/deploy/up-all.sh dev
+```
+
+For IDE/local host runs, use `MILVUS_HOST=localhost` instead of `milvus`.
+
+Main endpoints:
+
+- `POST /api/agents/chat_stream` for the primary product chat UI. The backend routes each request to normal chat or Planner/Executor/Supervisor business analysis automatically.
+- `POST /api/agents/chat` for synchronous tool-augmented chat with the same backend intent routing.
+- `POST /api/agents/business_ops` for advanced compatibility/debug access to Planner/Executor/Supervisor business analysis. Frontends should not need to choose this endpoint.
+- `POST /api/agents/knowledge/upload` for `.md` and `.txt` knowledge uploads.
+- `POST /api/agents/chat/clear` for clearing a bounded in-memory session.
+
+Example after login:
+
+```bash
+curl -X POST http://localhost:8080/api/agents/chat \
+  -H "Content-Type: application/json" \
+  -H "satoken: $TOKEN" \
+  -d '{"Id":"demo-session","Question":"帮我分析当前购物车可以做什么推荐"}'
+```
 
 ## Authentication Flow
 

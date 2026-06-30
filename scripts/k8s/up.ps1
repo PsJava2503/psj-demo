@@ -23,7 +23,8 @@ $AppDeployments = @(
     "commerce-payment-service",
     "commerce-notification-service",
     "commerce-address-service",
-    "commerce-order-service"
+    "commerce-order-service",
+    "commerce-agent-service"
 )
 
 function Require-Command {

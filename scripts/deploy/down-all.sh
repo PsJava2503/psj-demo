@@ -18,7 +18,15 @@ down_compose() {
   docker compose -f "${ROOT_DIR}/${module}/deploy/docker-compose.yml" down --remove-orphans
 }
 
+down_milvus_compose() {
+  COMPOSE_PROJECT_NAME="commerce-${ENV_NAME}-milvus" \
+  ENV_NAME="$ENV_NAME" \
+  NETWORK_NAME="commerce-${ENV_NAME}-net" \
+  docker compose -f "${ROOT_DIR}/deploy/infra/milvus-compose.yml" down --remove-orphans
+}
+
 down_compose "commerce-gateway"
+down_compose "commerce-agent-service"
 down_compose "commerce-cart-service"
 down_compose "commerce-order-service"
 down_compose "commerce-address-service"
@@ -27,6 +35,8 @@ down_compose "commerce-payment-service"
 down_compose "commerce-inventory-service"
 down_compose "commerce-product-service"
 down_compose "commerce-user-service"
+
+down_milvus_compose
 
 COMPOSE_PROJECT_NAME="commerce-${ENV_NAME}-infra" \
 docker compose -f "${ROOT_DIR}/deploy/infra/docker-compose.yml" down --remove-orphans

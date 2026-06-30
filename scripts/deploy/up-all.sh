@@ -105,6 +105,18 @@ run_infra_compose() {
   docker compose -f "${ROOT_DIR}/deploy/infra/docker-compose.yml" "$@"
 }
 
+run_milvus_compose() {
+  COMPOSE_PROJECT_NAME="commerce-${ENV_NAME}-milvus" \
+  ENV_NAME="$ENV_NAME" \
+  NETWORK_NAME="$NETWORK_NAME" \
+  MILVUS_PORT="${MILVUS_PORT:-19530}" \
+  MILVUS_HEALTH_PORT="${MILVUS_HEALTH_PORT:-9091}" \
+  MINIO_PORT="${MINIO_PORT:-9000}" \
+  MINIO_CONSOLE_PORT="${MINIO_CONSOLE_PORT:-9001}" \
+  ATTU_PORT="${ATTU_PORT:-8000}" \
+  docker compose -f "${ROOT_DIR}/deploy/infra/milvus-compose.yml" "$@"
+}
+
 infra_images_ready() {
   docker image inspect \
     "nacos/nacos-server:v2.4.2" \
@@ -172,6 +184,11 @@ pull_infra_images
 echo ">>> Starting infra stack (${ENV_NAME})"
 run_infra_compose up -d
 
+if [[ "${AGENT_RAG_USE_MILVUS:-false}" == "true" ]]; then
+  echo ">>> Starting optional Milvus stack (${ENV_NAME})"
+  run_milvus_compose up -d
+fi
+
 echo ">>> Starting business services (${ENV_NAME})"
 compose_up "commerce-user-service" $((8083 + APP_OFFSET)) "commerce_user" $((DB_BASE_PORT + 1))
 compose_up "commerce-product-service" $((8084 + APP_OFFSET)) "commerce_product" $((DB_BASE_PORT + 2))
@@ -181,6 +198,7 @@ compose_up "commerce-notification-service" $((8086 + APP_OFFSET)) "commerce_noti
 compose_up "commerce-address-service" $((8087 + APP_OFFSET)) "commerce_address" $((DB_BASE_PORT + 6))
 compose_up "commerce-order-service" $((8081 + APP_OFFSET)) "commerce_order" $((DB_BASE_PORT + 7))
 compose_up "commerce-cart-service" $((8088 + APP_OFFSET)) "commerce_cart" $((DB_BASE_PORT + 8))
+compose_up "commerce-agent-service" $((8089 + APP_OFFSET))
 compose_up "commerce-gateway" $((8080 + APP_OFFSET))
 
 echo ">>> Done. Environment: ${ENV_NAME}"
