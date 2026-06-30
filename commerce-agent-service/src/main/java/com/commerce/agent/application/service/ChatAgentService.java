@@ -14,6 +14,13 @@ import com.commerce.agent.application.model.ChatMessage;
 import com.commerce.agent.config.AgentProperties;
 import java.util.List;
 import java.util.function.Consumer;
+import io.micrometer.observation.ObservationRegistry;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.model.tool.ToolCallingManager;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.ai.retry.RetryUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -92,7 +99,7 @@ public class ChatAgentService {
 	}
 
 	ReactAgent createReactAgent(AgentProperties.ModelOptions options, String systemPrompt) {
-		DashScopeChatModel chatModel = createChatModel(options);
+		ChatModel chatModel = createChatModel(options);
 		return ReactAgent.builder()
 				.name("commerce_agent")
 				.description("面向电商系统的工具增强 AI Agent")
@@ -102,7 +109,14 @@ public class ChatAgentService {
 				.build();
 	}
 
-	DashScopeChatModel createChatModel(AgentProperties.ModelOptions options) {
+	ChatModel createChatModel(AgentProperties.ModelOptions options) {
+		if (properties.getModelProvider() == AgentProperties.ModelProvider.OPENAI) {
+			return createOpenAiChatModel(options);
+		}
+		return createDashScopeChatModel(options);
+	}
+
+	private DashScopeChatModel createDashScopeChatModel(AgentProperties.ModelOptions options) {
 		DashScopeApi dashScopeApi = DashScopeApi.builder().apiKey(apiKey).build();
 		return DashScopeChatModel.builder()
 				.dashScopeApi(dashScopeApi)
@@ -112,6 +126,30 @@ public class ChatAgentService {
 						.withMaxToken(options.getMaxToken())
 						.withTopP(options.getTopP())
 						.build())
+				.build();
+	}
+
+	private OpenAiChatModel createOpenAiChatModel(AgentProperties.ModelOptions options) {
+		AgentProperties.OpenAi openai = properties.getOpenai();
+		OpenAiApi openAiApi = OpenAiApi.builder()
+				.apiKey(openai.getApiKey())
+				.baseUrl(openai.getBaseUrl())
+				.completionsPath(openai.getCompletionsPath())
+				.build();
+		OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
+				.model(options.getModel())
+				.temperature(options.getTemperature())
+				.maxTokens(options.getMaxToken())
+				.topP(options.getTopP())
+				.build();
+		return OpenAiChatModel.builder()
+				.openAiApi(openAiApi)
+				.defaultOptions(chatOptions)
+				.toolCallingManager(ToolCallingManager.builder()
+						.observationRegistry(ObservationRegistry.NOOP)
+						.build())
+				.retryTemplate(RetryUtils.DEFAULT_RETRY_TEMPLATE)
+				.observationRegistry(ObservationRegistry.NOOP)
 				.build();
 	}
 
@@ -137,13 +175,24 @@ public class ChatAgentService {
 	}
 
 	private boolean useMock() {
-		return properties.isMockEnabled() || !StringUtils.hasText(apiKey) || "mock-api-key".equals(apiKey);
+		if (properties.isMockEnabled()) {
+			return true;
+		}
+		if (properties.getModelProvider() == AgentProperties.ModelProvider.OPENAI) {
+			String openAiApiKey = properties.getOpenai().getApiKey();
+			return !StringUtils.hasText(openAiApiKey) || "mock-api-key".equals(openAiApiKey);
+		}
+		return !StringUtils.hasText(apiKey) || "mock-api-key".equals(apiKey);
+	}
+
+	public boolean isMockMode() {
+		return useMock();
 	}
 
 	private String mockAnswer(String question, List<ChatMessage> history) {
 		String docs = internalDocsTools.queryInternalDocs(question);
 		return """
-				这是 commerce-agent-service 的本地 mock 响应，真实 DashScope 调用将在配置 DASHSCOPE_API_KEY 且关闭 AGENT_MOCK_ENABLED 后启用。
+				这是 commerce-agent-service 的本地 mock 响应，真实模型调用将在配置模型 API Key 且关闭 AGENT_MOCK_ENABLED 后启用。
 				
 				问题：%s
 				

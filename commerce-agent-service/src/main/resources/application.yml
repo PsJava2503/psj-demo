@@ -34,6 +34,11 @@ spring:
 
 agent:
   mock-enabled: ${AGENT_MOCK_ENABLED:true}
+  model-provider: ${AGENT_MODEL_PROVIDER:dashscope}
+  openai:
+    api-key: ${OPENAI_API_KEY:mock-api-key}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+    completions-path: ${OPENAI_COMPLETIONS_PATH:/v1/chat/completions}
   session:
     max-pairs: 6
   chat:

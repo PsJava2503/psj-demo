@@ -7,7 +7,6 @@ import com.commerce.agent.config.AgentProperties;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -16,20 +15,16 @@ public class SupervisorWorkflowService {
 
 	private final AgentProperties properties;
 
-	private final String apiKey;
-
 	private final ChatAgentService chatAgentService;
 
 	private final KnowledgeSearchService knowledgeSearchService;
 
 	public SupervisorWorkflowService(
 			AgentProperties properties,
-			@Value("${spring.ai.dashscope.api-key:}") String apiKey,
 			ChatAgentService chatAgentService,
 			KnowledgeSearchService knowledgeSearchService
 	) {
 		this.properties = properties;
-		this.apiKey = apiKey;
 		this.chatAgentService = chatAgentService;
 		this.knowledgeSearchService = knowledgeSearchService;
 	}
@@ -79,7 +74,7 @@ public class SupervisorWorkflowService {
 	}
 
 	private boolean useMock() {
-		return properties.isMockEnabled() || !StringUtils.hasText(apiKey) || "mock-api-key".equals(apiKey);
+		return chatAgentService.isMockMode();
 	}
 
 	private String mockReport(String task) {
@@ -98,7 +93,7 @@ public class SupervisorWorkflowService {
 				%s
 				
 				## 结论
-				当前运行在 mock 模式，已验证 Supervisor/Planner/Executor 的服务入口和报告结构。配置 DASHSCOPE_API_KEY 并设置 AGENT_MOCK_ENABLED=false 后，可启用真实 DashScope 多 Agent 编排。
+				当前运行在 mock 模式，已验证 Supervisor/Planner/Executor 的服务入口和报告结构。配置模型 API Key 并设置 AGENT_MOCK_ENABLED=false 后，可启用真实多 Agent 编排。
 				""".formatted(task, knowledgeSearchService.searchAsText(task));
 	}
 

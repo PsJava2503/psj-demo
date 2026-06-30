@@ -1117,13 +1117,40 @@ For local non-Docker runs, services expect default local dependency addresses:
 Useful environment variables:
 
 ```text
+AGENT_MODEL_PROVIDER=dashscope
 DASHSCOPE_API_KEY
+OPENAI_API_KEY
+OPENAI_BASE_URL=https://api.openai.com
+OPENAI_COMPLETIONS_PATH=/v1/chat/completions
 AGENT_MOCK_ENABLED=false
 AGENT_RAG_USE_MILVUS=false
 AGENT_UPLOAD_PATH=./uploads/agent
 MILVUS_HOST=milvus
 MILVUS_PORT=19530
 ```
+
+Use DashScope:
+
+```bash
+AGENT_MODEL_PROVIDER=dashscope \
+AGENT_MOCK_ENABLED=false \
+DASHSCOPE_API_KEY=<your-dashscope-key> \
+bash scripts/deploy/up-all.sh dev
+```
+
+Use OpenAI or an OpenAI-compatible gateway:
+
+```bash
+AGENT_MODEL_PROVIDER=openai \
+AGENT_MOCK_ENABLED=false \
+OPENAI_API_KEY=<your-openai-key> \
+OPENAI_BASE_URL=https://api.openai.com \
+AGENT_CHAT_MODEL=gpt-4o-mini \
+AGENT_WORKFLOW_MODEL=gpt-4o-mini \
+bash scripts/deploy/up-all.sh dev
+```
+
+For a local or third-party OpenAI-compatible service, set `OPENAI_BASE_URL` to that gateway base URL and keep `OPENAI_COMPLETIONS_PATH=/v1/chat/completions` unless the gateway uses a different path.
 
 For Docker Compose, enable persistent Milvus-backed RAG with:
 

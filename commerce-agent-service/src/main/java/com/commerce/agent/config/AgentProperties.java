@@ -8,6 +8,10 @@ public class AgentProperties {
 
 	private boolean mockEnabled = true;
 
+	private ModelProvider modelProvider = ModelProvider.DASHSCOPE;
+
+	private OpenAi openai = new OpenAi();
+
 	private Session session = new Session();
 
 	private ModelOptions chat = new ModelOptions();
@@ -22,6 +26,22 @@ public class AgentProperties {
 
 	public void setMockEnabled(boolean mockEnabled) {
 		this.mockEnabled = mockEnabled;
+	}
+
+	public ModelProvider getModelProvider() {
+		return modelProvider;
+	}
+
+	public void setModelProvider(ModelProvider modelProvider) {
+		this.modelProvider = modelProvider;
+	}
+
+	public OpenAi getOpenai() {
+		return openai;
+	}
+
+	public void setOpenai(OpenAi openai) {
+		this.openai = openai;
 	}
 
 	public Session getSession() {
@@ -67,6 +87,44 @@ public class AgentProperties {
 		public void setMaxPairs(int maxPairs) {
 			this.maxPairs = maxPairs;
 		}
+	}
+
+	public static class OpenAi {
+
+		private String apiKey = "mock-api-key";
+
+		private String baseUrl = "https://api.openai.com";
+
+		private String completionsPath = "/v1/chat/completions";
+
+		public String getApiKey() {
+			return apiKey;
+		}
+
+		public void setApiKey(String apiKey) {
+			this.apiKey = apiKey;
+		}
+
+		public String getBaseUrl() {
+			return baseUrl;
+		}
+
+		public void setBaseUrl(String baseUrl) {
+			this.baseUrl = baseUrl;
+		}
+
+		public String getCompletionsPath() {
+			return completionsPath;
+		}
+
+		public void setCompletionsPath(String completionsPath) {
+			this.completionsPath = completionsPath;
+		}
+	}
+
+	public enum ModelProvider {
+		DASHSCOPE,
+		OPENAI
 	}
 
 	public static class ModelOptions {
