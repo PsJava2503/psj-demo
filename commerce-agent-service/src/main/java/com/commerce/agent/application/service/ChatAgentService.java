@@ -109,6 +109,10 @@ public class ChatAgentService {
 				.build();
 	}
 
+	Object[] agentTools() {
+		return new Object[] { dateTimeTools, internalDocsTools, commerceTools };
+	}
+
 	ChatModel createChatModel(AgentProperties.ModelOptions options) {
 		if (properties.getModelProvider() == AgentProperties.ModelProvider.OPENAI) {
 			return createOpenAiChatModel(options);

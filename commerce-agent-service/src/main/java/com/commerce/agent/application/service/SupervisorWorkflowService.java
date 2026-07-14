@@ -47,7 +47,7 @@ public class SupervisorWorkflowService {
 				.description("执行 Planner 给出的单个排查步骤")
 				.model(chatAgentService.createChatModel(properties.getWorkflow()))
 				.systemPrompt(executorPrompt())
-				.methodTools()
+				.methodTools(chatAgentService.agentTools())
 				.outputKey("executor_feedback")
 				.build();
 		SupervisorAgent supervisor = SupervisorAgent.builder()

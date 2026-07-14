@@ -51,6 +51,15 @@ agent:
     temperature: 0.3
     max-token: 8000
     top-p: 0.9
+  harness:
+    max-duration-ms: ${AGENT_MAX_DURATION_MS:180000}
+    max-tool-calls: ${AGENT_MAX_TOOL_CALLS:12}
+    max-output-chars: ${AGENT_MAX_OUTPUT_CHARS:30000}
+    max-events-per-run: ${AGENT_MAX_EVENTS_PER_RUN:200}
+    max-retained-runs: ${AGENT_MAX_RETAINED_RUNS:1000}
+    max-concurrent-runs: ${AGENT_MAX_CONCURRENT_RUNS:8}
+    session-lock-timeout-ms: ${AGENT_SESSION_LOCK_TIMEOUT_MS:5000}
+    tool-result-preview-chars: ${AGENT_TOOL_RESULT_PREVIEW_CHARS:500}
   rag:
     enabled: ${AGENT_RAG_ENABLED:true}
     use-milvus: ${AGENT_RAG_USE_MILVUS:false}

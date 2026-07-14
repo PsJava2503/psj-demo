@@ -18,6 +18,8 @@ public class AgentProperties {
 
 	private ModelOptions workflow = new ModelOptions();
 
+	private Harness harness = new Harness();
+
 	private Rag rag = new Rag();
 
 	public boolean isMockEnabled() {
@@ -66,6 +68,14 @@ public class AgentProperties {
 
 	public void setWorkflow(ModelOptions workflow) {
 		this.workflow = workflow;
+	}
+
+	public Harness getHarness() {
+		return harness;
+	}
+
+	public void setHarness(Harness harness) {
+		this.harness = harness;
 	}
 
 	public Rag getRag() {
@@ -122,9 +132,91 @@ public class AgentProperties {
 		}
 	}
 
+	public static class Harness {
+
+		private long maxDurationMs = 180000;
+
+		private int maxToolCalls = 12;
+
+		private int maxOutputChars = 30000;
+
+		private int maxEventsPerRun = 200;
+
+		private int maxRetainedRuns = 1000;
+
+		private int maxConcurrentRuns = 8;
+
+		private long sessionLockTimeoutMs = 5000;
+
+		private int toolResultPreviewChars = 500;
+
+		public long getMaxDurationMs() {
+			return maxDurationMs;
+		}
+
+		public void setMaxDurationMs(long maxDurationMs) {
+			this.maxDurationMs = maxDurationMs;
+		}
+
+		public int getMaxToolCalls() {
+			return maxToolCalls;
+		}
+
+		public void setMaxToolCalls(int maxToolCalls) {
+			this.maxToolCalls = maxToolCalls;
+		}
+
+		public int getMaxOutputChars() {
+			return maxOutputChars;
+		}
+
+		public void setMaxOutputChars(int maxOutputChars) {
+			this.maxOutputChars = maxOutputChars;
+		}
+
+		public int getMaxEventsPerRun() {
+			return maxEventsPerRun;
+		}
+
+		public void setMaxEventsPerRun(int maxEventsPerRun) {
+			this.maxEventsPerRun = maxEventsPerRun;
+		}
+
+		public int getMaxRetainedRuns() {
+			return maxRetainedRuns;
+		}
+
+		public void setMaxRetainedRuns(int maxRetainedRuns) {
+			this.maxRetainedRuns = maxRetainedRuns;
+		}
+
+		public int getMaxConcurrentRuns() {
+			return maxConcurrentRuns;
+		}
+
+		public void setMaxConcurrentRuns(int maxConcurrentRuns) {
+			this.maxConcurrentRuns = maxConcurrentRuns;
+		}
+
+		public long getSessionLockTimeoutMs() {
+			return sessionLockTimeoutMs;
+		}
+
+		public void setSessionLockTimeoutMs(long sessionLockTimeoutMs) {
+			this.sessionLockTimeoutMs = sessionLockTimeoutMs;
+		}
+
+		public int getToolResultPreviewChars() {
+			return toolResultPreviewChars;
+		}
+
+		public void setToolResultPreviewChars(int toolResultPreviewChars) {
+			this.toolResultPreviewChars = toolResultPreviewChars;
+		}
+	}
+
 	public enum ModelProvider {
-		DASHSCOPE,
-		OPENAI
+		DASHSCOPE, OPENAI
 	}
 
 	public static class ModelOptions {

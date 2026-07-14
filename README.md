@@ -20,6 +20,10 @@ The current implementation does not include Elasticsearch. GraphQL is embedded i
 | `commerce-cart-service` | Shopping cart item persistence and cart management APIs. |
 | `commerce-agent-service` | AI Agent chat, SSE streaming, knowledge upload/RAG, and multi-agent business analysis over commerce read tools. |
 
+## Agent 开发记忆
+
+编码 Agent 会自动加载 [`AGENTS.md`](AGENTS.md) 中的持久规则。架构、工程规范、业务不变量、各服务记忆和 Agent Harness 说明统一收录在 [`docs/agent-memory/README.md`](docs/agent-memory/README.md)，可复用工作流位于 [`.agents/skills`](.agents/skills)。
+
 ## Tech Stack
 
 - Java 17
@@ -1125,6 +1129,10 @@ OPENAI_COMPLETIONS_PATH=/v1/chat/completions
 AGENT_MOCK_ENABLED=false
 AGENT_RAG_USE_MILVUS=false
 AGENT_UPLOAD_PATH=./uploads/agent
+AGENT_MAX_DURATION_MS=180000
+AGENT_MAX_TOOL_CALLS=12
+AGENT_MAX_OUTPUT_CHARS=30000
+AGENT_MAX_CONCURRENT_RUNS=8
 MILVUS_HOST=milvus
 MILVUS_PORT=19530
 ```
@@ -1162,6 +1170,31 @@ bash scripts/deploy/up-all.sh dev
 
 For IDE/local host runs, use `MILVUS_HOST=localhost` instead of `milvus`.
 
+### Agent harness runtime
+
+All chat and business-analysis requests run through a single harness instead of calling a model directly from the controller. The harness owns the complete run lifecycle:
+
+```text
+request -> queued run -> session lock -> intent route -> model/tool loop
+        -> output/tool/time budget checks -> session commit -> terminal run
+```
+
+Each invocation receives a `runId`. The in-memory run registry stores bounded lifecycle events, selected route, tool-call count, output size, duration, result, and error state. Runs are visible only to their owner and administrators. Cancellation and timeouts are cooperative: the harness interrupts the worker and every tool boundary checks the run state before proceeding.
+
+Harness limits can be tuned with:
+
+| Variable | Default | Purpose |
+| --- | ---: | --- |
+| `AGENT_MAX_DURATION_MS` | `180000` | Maximum queued plus execution time for one run. |
+| `AGENT_MAX_TOOL_CALLS` | `12` | Maximum tool invocations in one run. |
+| `AGENT_MAX_OUTPUT_CHARS` | `30000` | Maximum response characters in one run. |
+| `AGENT_MAX_EVENTS_PER_RUN` | `200` | Retained audit events for one run. |
+| `AGENT_MAX_RETAINED_RUNS` | `1000` | Completed/in-flight runs retained in memory. |
+| `AGENT_MAX_CONCURRENT_RUNS` | `8` | Harness worker concurrency. |
+| `AGENT_SESSION_LOCK_TIMEOUT_MS` | `5000` | Wait limit when the same session is already running. |
+
+The current run/session registry is intentionally in-memory. For multiple replicas, replace it with Redis or a database while keeping the harness API boundary unchanged.
+
 Main endpoints:
 
 - `POST /api/agents/chat_stream` for the primary product chat UI. The backend routes each request to normal chat or Planner/Executor/Supervisor business analysis automatically.
@@ -1169,6 +1202,11 @@ Main endpoints:
 - `POST /api/agents/business_ops` for advanced compatibility/debug access to Planner/Executor/Supervisor business analysis. Frontends should not need to choose this endpoint.
 - `POST /api/agents/knowledge/upload` for `.md` and `.txt` knowledge uploads.
 - `POST /api/agents/chat/clear` for clearing a bounded in-memory session.
+- `GET /api/agents/runs/{runId}` for run state, budgets, route, and audit events.
+- `GET /api/agents/runs?sessionId=...&limit=20` for the current user's recent runs.
+- `POST /api/agents/runs/{runId}/cancel` for cooperative cancellation.
+
+`POST /api/agents/chat` now returns both `sessionId` and `runId`. Streaming responses retain the existing `content`, `error`, and `done` message types and add `status` messages containing structured harness lifecycle events.
 
 Example after login:
 

@@ -2,6 +2,7 @@ package com.commerce.agent.application.service;
 
 import com.commerce.security.SecurityHeaders;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -56,6 +57,23 @@ public class UserContextService {
 
 		public static UserContext empty() {
 			return new UserContext(null, "", "", "");
+		}
+
+		public boolean hasRole(String role) {
+			return containsCsvValue(roles, role);
+		}
+
+		public boolean hasPermission(String permission) {
+			return containsCsvValue(permissions, permission);
+		}
+
+		private boolean containsCsvValue(String csv, String expected) {
+			if (!StringUtils.hasText(csv) || !StringUtils.hasText(expected)) {
+				return false;
+			}
+			return Arrays.stream(csv.split(","))
+					.map(String::trim)
+					.anyMatch(expected::equalsIgnoreCase);
 		}
 	}
 }
